@@ -1,0 +1,18 @@
+<pre class='metadata'>
+Title: Futures
+Shortname: PTODO
+Revision: 0
+Audience: SG1
+Status: D
+Group: WG21
+URL: TODO
+!Source: <a href="https://github.com/executors/futures/blob/master/futures.bs">github.com/executors/futures/blob/master/futures.bs</a>
+Editor: Lee Howes, Facebook, lwh@fb.com
+Editor: Bryce Adelstein-Lelbach, brycelelbach@gmail.com
+Abstract: Executor-compatible Futures for C++.
+</pre>
+
+Introduction {#intro}
+=====================
+
+Introduction here.
