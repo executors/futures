@@ -16,3 +16,113 @@ Introduction {#intro}
 =====================
 
 Introduction here.
+
+
+SemiFuture requirements
+===================
+
+
+
+
+ContinuableFuture requirements
+==========================
+
+
+
+Type: std::standard_promise
+===========================
+```
+template<class T>
+class promise {
+public:
+
+
+    standard_semi_future<T> get_future();
+};
+```
+
+Type: std::standard_semi_future
+===============================
+```
+template<class T>
+class standard_semi_future {
+public:
+    using value_type = T;
+
+    // StandardSemiFuture may be constructed already complete
+    standard_semi_future(T);
+    standard_semi_future(standard_semi_future&&) = default;
+    standard_semi_future(const standard_semi_future&) = delete;
+ 
+    // standard_semi_future may be constructed from any type 
+    // meeting the ContinuableFuture requirements
+    template<class ContinuableFuture>
+    standard_semi_future(ContinuableFuture&&);
+
+    // get and get_expected are both destructive.
+    // get will throw on exception. get_expected will return either a value
+    // or an exception.
+    T get() &&;
+    expected<T, exception_ptr> get_expected() noexcept &&;
+
+    // Wait is not destructive.
+    standard_semi_future& wait() noexcept &;
+    standard_semi_future&& wait() noexcept &&;
+
+    bool is_ready() noexcept;
+
+    template<class EI, class EO>
+    // Where EI and EO are  one-way or two-way executors.
+    // EO must be derived from EI through the executor 
+    // requirement API.
+    standard_continuable_future<T, EO> on(EI);
+};
+```
+
+
+Type: std::standard_continuable_future
+=============================
+```
+template<class T, class E>
+class standard_continuable_future {
+public:
+    using value_type = T;
+    using executor_type = Ex;
+    using semi_future_type = standard_semi_future<T>;
+    
+    standard_continuable_future(const standard_continuable_future&) = delete;
+    standard_continuable_future(standard_continuable_future&&) = default;
+
+    template<class ReturnFuture, class F>
+    // Where ReturnFuture will satisfy the requirements of ContinuableFuture,
+    // where is_same_t<ReturnFuture::value_type, result_of_t<decay_t<F>(decay_t<T>)>>
+    // and will either be an instance of standard_continuable_future or
+    // executor_future_t<EO, T> where EO has the same executor properties as
+    // E but with the addition of the twoway_t property.
+    ReturnFuture then(F&&) &&;
+
+    template<class ReturnFuture, class F, class ResultFactory, class SharedFactory>
+    // Where ReturnFuture will satisfy the requirements of ContinuableFuture,
+    // where is_same_t<ReturnFuture::value_type, result_of_t<decay_t<ResultFactory>>
+    // and will either be an instance of standard_continuable_future or
+    // executor_future_t<EO, T> where EO has the same executor properties as
+    // E but with the addition of the twoway_t property.
+    ReturnFuture bulk_then(F&&, executor_shape_t<Ex>, SharedFactory&&, ResultFactory&&) &&;
+
+    standard_continuable_future then_error(F&&) &&;
+
+    template<class EI, class EO>
+    // Where EI and EO are  one-way or two-way executors.
+    // EO must be derived from EI through the executor 
+    // requirement API.
+    standard_continuable_future<T, EO> on(EI);
+
+    E get_executor() const;
+    standard_semi_future<T> semi() &&;
+}
+};
+```
+
+TODO:
+Return types of continuations.
+Split above into detail sections for comments.
