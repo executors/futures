@@ -33,13 +33,20 @@ Type: std::standard_promise
 ===========================
 ```
 template<class T>
-class promise {
+class standard_promise {
 public:
+    using promise_default_executor = implementation-defined;
 
-
-    standard_semi_future<T> get_future();
+    standard_future<T, promise_default_executor> get_future();
+    standard_semi_future<T> get_semi_future();
 };
 ```
+
+The default executor type for promises allows for efficient promise->future
+code. This executor is intended for use only locally. It may be optimised
+using thread-local storage and should not be constructible. It is not copyable
+and its lifetime is not guaranteed to outlive a single continuation chain
+starting with a promise.
 
 Type: std::standard_semi_future
 ===============================
@@ -53,8 +60,8 @@ public:
     standard_semi_future(T);
     standard_semi_future(standard_semi_future&&) = default;
     standard_semi_future(const standard_semi_future&) = delete;
- 
-    // standard_semi_future may be constructed from any type 
+
+    // standard_semi_future may be constructed from any type
     // meeting the ContinuableFuture requirements
     template<class ContinuableFuture>
     standard_semi_future(ContinuableFuture&&);
@@ -73,7 +80,7 @@ public:
 
     template<class EI, class EO>
     // Where EI and EO are  one-way or two-way executors.
-    // EO must be derived from EI through the executor 
+    // EO must be derived from EI through the executor
     // requirement API.
     standard_continuable_future<T, EO> on(EI);
 };
@@ -89,7 +96,7 @@ public:
     using value_type = T;
     using executor_type = Ex;
     using semi_future_type = standard_semi_future<T>;
-    
+
     standard_continuable_future(const standard_continuable_future&) = delete;
     standard_continuable_future(standard_continuable_future&&) = default;
 
@@ -113,7 +120,7 @@ public:
 
     template<class EI, class EO>
     // Where EI and EO are  one-way or two-way executors.
-    // EO must be derived from EI through the executor 
+    // EO must be derived from EI through the executor
     // requirement API.
     standard_continuable_future<T, EO> on(EI);
 
