@@ -19,20 +19,21 @@ Introduction {#intro}
 Introduction here.
 
 
-SemiFuture requirements
-===================
+`SemiFuture` requirements {#semifuture}
+=========================
 
 
 
 
-ContinuableFuture requirements
-==========================
+`ContinuableFuture` requirements {#continuablefuture}
+================================
 
 
 
-Type: std::standard_promise
-===========================
-```
+Type: `std::standard_promise` {#type_standard_promise}
+=============================
+
+```c++
 template<class T>
 class standard_promise {
 public:
@@ -49,9 +50,10 @@ using thread-local storage and should not be constructible. It is not copyable
 and its lifetime is not guaranteed to outlive a single continuation chain
 starting with a promise.
 
-Type: std::standard_semi_future
-===============================
-```
+Type: `std::standard_semi_future` {#type_standard_semi_future}
+=================================
+
+```c++
 template<class T>
 class standard_semi_future {
 public:
@@ -88,9 +90,10 @@ public:
 ```
 
 
-Type: std::standard_continuable_future
-=============================
-```
+Type: `std::standard_continuable_future`
+========================================
+
+```c++
 template<class T, class E>
 class standard_continuable_future {
 public:
@@ -131,6 +134,9 @@ public:
 };
 ```
 
-TODO:
-Return types of continuations.
-Split above into detail sections for comments.
+TODO
+====
+
+- Remove this section
+- Return types of continuations.
+- Split above into detail sections for comments.
