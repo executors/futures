@@ -8,8 +8,8 @@ Group: WG21
 URL: TODO
 !Source: <a href="https://github.com/executors/futures/blob/master/futures.bs">github.com/executors/futures/blob/master/futures.bs</a>
 Editor: Lee Howes, Facebook, lwh@fb.com
-Editor: Bryce Adelstein-Lelbach, brycelelbach@gmail.com
-Editor: David S. Hollman, dshollm@sandia.gov
+Editor: Bryce Adelstein-Lelbach, Nvidia, brycelelbach@gmail.com
+Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
 Abstract: Executor-compatible Futures for C++.
 </pre>
 
