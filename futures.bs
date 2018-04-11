@@ -19,29 +19,31 @@ Introduction {#intro}
 
 TODO
 
-Wording
-=======
+Proposed New Wording
+====================
 
 Futures
 -------
 
 1.  A <dfn>future</dfn> is an object that represents a value that may not available yet.
 
-2.  A future consists of two components: content and status.
+2.  A [=future=] consists of two components: content and status.
 
-3.  A <dfn>future's content</dfn> is either a value or error.
+3.  A <dfn data-lt="future's content|future content">future's content</dfn> is either a value or error.
 
-4.  A <dfn>future's status</dfn> is either not ready, ready or consumed.
+4.  A <dfn data-lt="future's status|future status">future's status</dfn> is either [=not ready=], [=ready=] or [=consumed=].
 
-5.  A <dfn>not ready future</dfn> is a future whose content is unavailable.
+5.  A <dfn data-lt="not ready|not ready future">not ready future</dfn> is a future whose content is not available yet.
 
-6.  A not ready future may be <dfn>made ready</dfn>, an operation that atomically sets the futures content and changes its status to ready.
+6.  A not ready future may be <dfn data-lt="made ready|make ready">made ready</dfn>, an operation that atomically sets the [=future's content=] and changes [=future's status|its status=] to [=ready=].
 
-7.  A <dfn>ready future</dfn> is a future whose content is available.
+7.  A <dfn data-lt="ready|ready future">ready future</dfn> is a future whose content is available.
 
-8.  A ready future may be <dfn>consumed</dfn>, an operation that atomically invalidates the futures content and changes its status to consumed.
+8.  A [=ready future=] may be <dfn data-lt="made consumed|make consumed">made consumed</dfn>, an operation that atomically invalidates the [=future's content=] and changes [=future's status|its status=] to [=consumed=].
 
-9.  A program has undefined behavior if it accesses the content of a not ready or consumed future.
+9.  A <dfn data-lt="consumed|consumed future">consumed future</dfn> is a future whose [=future content|content=] was available previously and is now unavailable.
+
+10. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=consumed future=].
 
 `FutureTrigger` Requirements
 ----------------------------
@@ -68,12 +70,12 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
-  <td>`FT`</td>
+  <td>`FT<T>`</td>
   <td>A `FutureTrigger` type for type `T`.</td>
 </tr>
 <tr>
   <td>`ft`</td>
-  <td>A value of type `FT`.</td>
+  <td>A value of type `FT<T>`.</td>
 </tr>
 <tr>
   <td>`f`</td>
@@ -114,7 +116,7 @@ Descriptive Variable Definitions
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
-1. A <dfn>semi future</dfn> is future that is not bound to an executor.
+1. A <dfn>semi future</dfn> is a [=future=] that is not bound to an executor.
 
 2. A `SemiFuture` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
 
@@ -132,12 +134,12 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
-  <td>`SF`</td>
+  <td>`SF<T>`</td>
   <td>A `SemiFuture` type for type `T`.</td>
 </tr>
 <tr>
   <td>`sf`</td>
-  <td>A value of type `SF`.</td>
+  <td>A value of type `SF<T>`.</td>
 </tr>
 <tr>
   <td>`E`</td>
@@ -159,7 +161,7 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`sf.via(e)`</td>
-  <td>A `ContinuableFuture` for type `T`.</td>
+  <td>`executor_future_t<E, decltype(declval<G>()(declval<T>()))>`</td>
   <td>
     **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
 
@@ -173,8 +175,80 @@ Descriptive Variable Definitions
 `ContinuableFuture` Requirements
 --------------------------------
 
-TODO
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
+1. A <dfn>continuable future</dfn> is a [=future=] that is bound to an executor and can have continuations attached to it.
+
+2. A `ContinuableFuture` shall meet the `SemiFuture` requirements and the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`E`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `E`.</td>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`CF<E, T>`</td>
+  <td>A `ContinuableFuture` type for executor type `E` and value type `T`.</td>
+</tr>
+<tr>
+  <td>`cf`</td>
+  <td>A value of type `CF<E, F>`.</td>
+</tr>
+<tr>
+  <td>`G`</td>
+  <td>A <a href="eel.is/c++draft/func.def">callable type</a>.</td>
+</tr>
+<tr>
+  <td>`g`</td>
+  <td>A <a href="eel.is/c++draft/func.def">callable object</a> of type `G`.</td>
+</tr>
+</table>
+
+`ContinuableFuture` Requirements
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`cf.get_executor()`</td>
+  <td>`E`</td>
+  <td>
+    **Returns:** The executor that the future is bound to.
+
+    **Throws:** Nothing.
+  </td>
+</tr>
+<tr>
+  <td>`cf.then(g)`</td>
+  <td>`CF<E, decltype(declval<G>()(declval<T>()))>`</td>
+  <td>
+    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+
+    **Effects:** TODO.
+  </td>
+</tr>
+</table>
+
+</center>
 
 `std::standard_promise`
 -----------------------
@@ -282,4 +356,8 @@ public:
 TODO:
 Return types of continuations.
 Split above into detail sections for comments.
+
+Proposed Changes to Executors
+=============================
+
 
