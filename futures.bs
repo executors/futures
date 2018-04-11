@@ -1,36 +1,184 @@
 <pre class='metadata'>
 Title: Futures
 Shortname: PTODO
+URL: wg21.link/PTODO
 Revision: 0
 Audience: SG1
 Status: D
 Group: WG21
-URL: TODO
 !Source: <a href="https://github.com/executors/futures/blob/master/futures.bs">github.com/executors/futures/blob/master/futures.bs</a>
+No Abstract: yes
+Markup Shorthands: markdown yes
+Markup Shorthands: biblio yes
 Editor: Lee Howes, Facebook, lwh@fb.com
-Editor: Bryce Adelstein-Lelbach, brycelelbach@gmail.com
-Abstract: Executor-compatible Futures for C++.
+Editor: Bryce Adelstein Lelbach, brycelelbach@gmail.com
 </pre>
 
 Introduction {#intro}
 =====================
 
-Introduction here.
+TODO
+
+Wording
+=======
+
+Futures
+-------
+
+1.  A <dfn>future</dfn> is an object that represents a value that may not available yet.
+
+2.  A future consists of two components: content and status.
+
+3.  A <dfn>future's content</dfn> is either a value or error.
+
+4.  A <dfn>future's status</dfn> is either not ready, ready or consumed.
+
+5.  A <dfn>not ready future</dfn> is a future whose content is unavailable.
+
+6.  A not ready future may be <dfn>made ready</dfn>, an operation that atomically sets the futures content and changes its status to ready.
+
+7.  A <dfn>ready future</dfn> is a future whose content is available.
+
+8.  A ready future may be <dfn>consumed</dfn>, an operation that atomically invalidates the futures content and changes its status to consumed.
+
+9.  A program has undefined behavior if it accesses the content of a not ready or consumed future.
+
+`FutureTrigger` Requirements
+----------------------------
+
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+1.  A <dfn>future trigger</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> associated with a future.
+
+2.  When a future trigger is called, it makes ready its associated future.
+
+3.  A `FutureTrigger` type shall meet the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`FT`</td>
+  <td>A `FutureTrigger` type for type `T`.</td>
+</tr>
+<tr>
+  <td>`ft`</td>
+  <td>A value of type `FT`.</td>
+</tr>
+<tr>
+  <td>`f`</td>
+  <td>The future associated with `ft`.</td>
+</tr>
+<tr>
+  <td>`v`</td>
+  <td>A value of type `variant<T, exception_ptr>`.</td>
+</tr>
+</table>
+
+`FutureTrigger` Requirements
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`ft(v)`</td>
+  <td>(not used)</td>
+  <td>
+      **Preconditions:** `f` is [=not ready=]. [ *Note:* e.g. `ft` has not been
+      called before. — *end note* ]
+
+      **Postconditions:** `f` is [=ready=] and contains either:
+      * The value `get<0>(v)` if `v.index() == 0`.
+      * The error `get<1>(v)` if `v.index() == 1`.
+  </td>
+</tr>
+</table>
+
+</center>
+
+`SemiFuture` Requirements
+-------------------------
+
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+1. A <dfn>semi future</dfn> is future that is not bound to an executor.
+
+2. A `SemiFuture` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`SF`</td>
+  <td>A `SemiFuture` type for type `T`.</td>
+</tr>
+<tr>
+  <td>`sf`</td>
+  <td>A value of type `SF`.</td>
+</tr>
+<tr>
+  <td>`E`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `E`.</td>
+</tr>
+</table>
+
+`SemiFuture` Requirements
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`sf.via(e)`</td>
+  <td>A `ContinuableFuture` for type `T`.</td>
+  <td>
+    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+
+    TODO: Can this fail?
+  </td>
+</tr>
+</table>
+
+</center>
+
+`ContinuableFuture` Requirements
+--------------------------------
+
+TODO
 
 
-SemiFuture requirements
-===================
+`std::standard_promise`
+-----------------------
 
-
-
-
-ContinuableFuture requirements
-==========================
-
-
-
-Type: std::standard_promise
-===========================
 ```
 template<class T>
 class standard_promise {
@@ -48,8 +196,9 @@ using thread-local storage and should not be constructible. It is not copyable
 and its lifetime is not guaranteed to outlive a single continuation chain
 starting with a promise.
 
-Type: std::standard_semi_future
-===============================
+`std::standard_semi_future`
+---------------------------
+
 ```
 template<class T>
 class standard_semi_future {
@@ -86,9 +235,9 @@ public:
 };
 ```
 
+`std::standard_continuable_future`
+----------------------------------
 
-Type: std::standard_continuable_future
-=============================
 ```
 template<class T, class E>
 class standard_continuable_future {
@@ -133,3 +282,4 @@ public:
 TODO:
 Return types of continuations.
 Split above into detail sections for comments.
+
