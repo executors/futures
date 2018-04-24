@@ -83,7 +83,51 @@ In a long chain across multiple executors there will be multiple such interactio
 Proposed solution
 ====================
 
+To solve this we provide two things:
+ * A promise concept, that allows setting of value and/or exception.
+ * A mechanism to retrieve from an executor a pair of a promise and a future, such that the future is a valid input dependence for a call to `then_execute` or `bulk_then_execute`.
 
+The promise is a write-only concept. This simplifies the definition and improves flexibility.
+
+The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
 
 Proposed New Wording
 ====================
+
+Wording supplements current text in [p0443](https://wg21.link/P0443).
+
+### 1.1.x `Promise` requirements
+
+A type `P` meets the `Promise` requirements for some value type `T` if an instance `p` of `P` satisfies the requirements in the table below.
+
+| Expression | Return Type | Operational semantics |
+|------------|-------------|---------------------- |
+| `p.set_value(T)` | void | Completes the promise with a value. |
+| `p.set_exception(std::exception_ptr)` | void | Completes the promise with an exception wrapped in a std::exception_ptr. |
+
+
+### 1.3.3.2 Promise contract
+
+template <T>
+struct promise_contract_t
+{
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type
+    = std::pair<std::promise<T>, std::future<T>>;
+
+  template<class Executor>
+  static constexpr decltype(auto) static_query_v
+    = Executor::query(promise_contract_t());
+};
+
+The `promise_contract_t` property can be used only with query, which returns the execution context associated with the executor.
+
+The result of  applied to a `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a `Promise` and an implementation-defined token type that will be interpreted as a valid input future by calls to `then_execute` or `bulk_then_execute` on
+
+The value returned from `execution::query(e, promise_contract_t<T>)`, where `e` is an executor and `T` is a type, should be unique for any given call.
+When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a `std::pair` where first value is an instance of a type matching the `Promise` requirements and the second is a token type that `e` will interpret as a valid future parameter to calls to `then_execute` or `bulk_then_execute`.
+When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the query is a `std::pair` where the first value is a `std::promise<T>` and the second is a `std::future<T>` such that the future was retrieved from the promise.
+
+[*Editorial note:* The default `Promise` and `Future` types should be generalised with the merge of [pTODO](https://wg21.link/PTODO) such that no specific type is specified, but rather than type satisfying the `Future` concept. *--end editorial note*]
