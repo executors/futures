@@ -45,16 +45,14 @@ Futures
 
 10. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=consumed future=].
 
-`FutureTrigger` Requirements
+`FutureContinuation` Requirements
 ----------------------------
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
-1.  A <dfn>future trigger</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> associated with a future.
+1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> associated with a future.
 
-2.  When a future trigger is called, it makes ready its associated future.
-
-3.  A `FutureTrigger` type shall meet the requirements described in the Tables below.
+2.  A `FutureContinuation` type shall meet the requirements described in the Tables below.
 
 <center>
 
@@ -70,24 +68,26 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
-  <td>`FT<T>`</td>
-  <td>A `FutureTrigger` type for type `T`.</td>
+  <td>`FC<T>`</td>
+  <td>A `FutureContinuation` type for type `T`.</td>
 </tr>
 <tr>
-  <td>`ft`</td>
-  <td>A value of type `FT<T>`.</td>
-</tr>
-<tr>
-  <td>`f`</td>
-  <td>The future associated with `ft`.</td>
+  <td>`fc`</td>
+  <td>A value of type `FC<T>`.</td>
 </tr>
 <tr>
   <td>`v`</td>
-  <td>A value of type `variant<T, exception_ptr>`.</td>
+  <td>A value of type `T`, `T&`, `const T&`, or `T&&`.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `std::exception_ptr`, or `std::exception_ptr&&`.</td>
 </tr>
 </table>
 
-`FutureTrigger` Requirements
+`FutureContinuation` Requirements
+
+Implements at least one of:
 
 <table border=1>
 <tr>
@@ -97,14 +97,20 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`ft(v)`</td>
-  <td>(not used)</td>
+  <td>R</td>
   <td>
-      **Preconditions:** `f` is [=not ready=]. [ *Note:* e.g. `ft` has not been
-      called before. — *end note* ]
+    Execute associated code inline with the caller. May throw.
+  </td>
+</tr>
+<tr>
+  <td>`ft(exception_tag_t, e)`</td>
+  <td>R</td>
+  <td>
+    Execute associated code inline with the caller.
 
-      **Postconditions:** `f` is [=ready=] and contains either:
-      * The value `get<0>(v)` if `v.index() == 0`.
-      * The error `get<1>(v)` if `v.index() == 1`.
+    May throw.
+
+    If both `ft(v)` and `ft(exception_tag_t, e)` are provided on the same `FutureContinuation` then return type `R` should be the same for all overloads of the two operations.
   </td>
 </tr>
 </table>
@@ -212,11 +218,11 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`G`</td>
-  <td>A <a href="eel.is/c++draft/func.def">callable type</a>.</td>
+  <td>A type that satisfies the requirements of `FutureContinuation`.</td>
 </tr>
 <tr>
   <td>`g`</td>
-  <td>A <a href="eel.is/c++draft/func.def">callable object</a> of type `G`.</td>
+  <td>An object of type `G`.</td>
 </tr>
 </table>
 
@@ -239,11 +245,19 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`cf.then(g)`</td>
-  <td>`CF<E, decltype(declval<G>()(declval<T>()))>`</td>
   <td>
-    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+    **If** `INVOKE(declval<G>(), declval<T>())` is valid:
 
-    **Effects:** TODO.
+      `CF<E, decltype(INVOKE(declval<G>(), declval<T>()))>`
+
+    **Otherwise**:
+
+      `CF<E, T>`
+  </td>
+  <td>
+    **Returns:** A `ContinuableFuture` that is bound to the executor `e` and that wraps the type returned by execution of either the value or exception operations implemented in the `FutureContinuation`.
+
+    **Effects:** If `cf` completes with a value, the value form of the `FutureContinuation` will run. If `cf` completes with an exception the exception form will be called, parameterised with a `std::exception_ptr`. In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
   </td>
 </tr>
 </table>
@@ -359,5 +373,3 @@ Split above into detail sections for comments.
 
 Proposed Changes to Executors
 =============================
-
-
