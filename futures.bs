@@ -145,7 +145,7 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`sf`</td>
-  <td>A value of type `SF<T>`.</td>
+  <td>An r-value of type `SF<T>`.</td>
 </tr>
 <tr>
   <td>`E`</td>
@@ -217,6 +217,14 @@ Descriptive Variable Definitions
   <td>A value of type `CF<E, F>`.</td>
 </tr>
 <tr>
+  <td>`rcf`</td>
+  <td>An r-value of type `CF<E, F>`.</td>
+</tr>
+<tr>
+  <td>`SF<T>`</td>
+  <td>A `SemiFuture` type for type `T`.</td>
+</tr>
+<tr>
   <td>`G`</td>
   <td>A type that satisfies the requirements of `FutureContinuation`.</td>
 </tr>
@@ -244,7 +252,7 @@ Descriptive Variable Definitions
   </td>
 </tr>
 <tr>
-  <td>`cf.then(g)`</td>
+  <td>`rcf.then(g)`</td>
   <td>
     **If** `INVOKE(declval<G>(), declval<T>())` is valid:
 
@@ -257,7 +265,21 @@ Descriptive Variable Definitions
   <td>
     **Returns:** A `ContinuableFuture` that is bound to the executor `e` and that wraps the type returned by execution of either the value or exception operations implemented in the `FutureContinuation`.
 
-    **Effects:** If `cf` completes with a value, the value form of the `FutureContinuation` will run. If `cf` completes with an exception the exception form will be called, parameterised with a `std::exception_ptr`. In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
+    **Effects:**
+      * If `cf` completes with a value, the value form of the `FutureContinuation` will run.
+      * If `cf` completes with an exception the exception form will be called, parameterised with a `std::exception_ptr`.
+      * In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
+  </td>
+</tr>
+<tr>
+  <td>`rcf.semi()`</td>
+  <td>
+    `SF<T>`
+  </td>
+  <td>
+    **Returns:** A `SemiFuture` that completes when `rcf` would have completed.
+
+    **Effects:** Erasing the executor from `rcf`.
   </td>
 </tr>
 </table>
@@ -297,29 +319,13 @@ public:
     standard_semi_future(T);
     standard_semi_future(standard_semi_future&&) = default;
     standard_semi_future(const standard_semi_future&) = delete;
-
-    // standard_semi_future may be constructed from any type
-    // meeting the ContinuableFuture requirements
-    template<class ContinuableFuture>
-    standard_semi_future(ContinuableFuture&&);
-
-    // get and get_expected are both destructive.
-    // get will throw on exception. get_expected will return either a value
-    // or an exception.
-    T get() &&;
-    expected<T, exception_ptr> get_expected() noexcept &&;
-
-    // Wait is not destructive.
-    standard_semi_future& wait() noexcept &;
-    standard_semi_future&& wait() noexcept &&;
-
-    bool is_ready() noexcept;
+    standard_semi_future(standard_continuable_future<T>&&);
 
     template<class EI, class EO>
     // Where EI and EO are  one-way or two-way executors.
     // EO must be derived from EI through the executor
     // requirement API.
-    standard_continuable_future<T, EO> on(EI);
+    standard_continuable_future<T, EO> via(EI) &&;
 };
 ```
 
@@ -343,23 +349,13 @@ public:
     // and will either be an instance of standard_continuable_future or
     // executor_future_t<EO, T> where EO has the same executor properties as
     // E but with the addition of the twoway_t property.
-    ReturnFuture then(F&&) &&;
-
-    template<class ReturnFuture, class F, class ResultFactory, class SharedFactory>
-    // Where ReturnFuture will satisfy the requirements of ContinuableFuture,
-    // where is_same_t<ReturnFuture::value_type, result_of_t<decay_t<ResultFactory>>
-    // and will either be an instance of standard_continuable_future or
-    // executor_future_t<EO, T> where EO has the same executor properties as
-    // E but with the addition of the twoway_t property.
-    ReturnFuture bulk_then(F&&, executor_shape_t<Ex>, SharedFactory&&, ResultFactory&&) &&;
-
-    standard_continuable_future then_error(F&&) &&;
+    ReturnFuture then(FutureContinuation&&) &&;
 
     template<class EI, class EO>
     // Where EI and EO are  one-way or two-way executors.
     // EO must be derived from EI through the executor
     // requirement API.
-    standard_continuable_future<T, EO> on(EI);
+    standard_continuable_future<T, EO> via(EI) &&;
 
     E get_executor() const;
     standard_semi_future<T> semi() &&;
