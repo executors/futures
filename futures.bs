@@ -167,11 +167,17 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`sf.via(e)`</td>
-  <td>`executor_future_t<E, decltype(declval<G>()(declval<T>()))>`</td>
+  <td>Implementation-defined</td>
   <td>
     **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
 
-    TODO: Can this fail?
+    **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
+
+    **Success:** Succeeds if:
+     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+     * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+
+     Fails at compile-time otherwise.
   </td>
 </tr>
 </table>
@@ -280,6 +286,21 @@ Descriptive Variable Definitions
     **Returns:** A `SemiFuture` that completes when `rcf` would have completed.
 
     **Effects:** Erasing the executor from `rcf`.
+  </td>
+</tr>
+<tr>
+  <td>`rcf.via(e)`</td>
+  <td>Implementation-defined</td>
+  <td>
+    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+
+    **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
+
+    **Success:** Succeeds if:
+     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+     * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+
+     Fails at compile-time otherwise.
   </td>
 </tr>
 </table>
