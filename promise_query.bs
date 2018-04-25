@@ -107,7 +107,7 @@ A type `P` meets the `Promise` requirements for some value type `T` if an instan
     <th>Operational semantics</th>
   </tr>
   <tr>
-    <td>`p.void(T)`</td>
+    <td>`p.value(T)`</td>
     <td>void</td>
     <td>Completes the promise with a value.</td>
   </tr>
