@@ -126,7 +126,7 @@ Implements at least one of:
 
 1. A <dfn>semi future</dfn> is a [=future=] that is not bound to an executor.
 
-2. A `SemiFuture` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
+2. A `SemiFuture` type for type `T` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
 
 <center>
 
@@ -142,7 +142,7 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
-  <td>`SF<T>`</td>
+  <td>`SF`</td>
   <td>A `SemiFuture` type for type `T`.</td>
 </tr>
 <tr>
@@ -166,6 +166,16 @@ Descriptive Variable Definitions
   <th>Expression</th>
   <th>Return Type</th>
   <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`future_value_t<SF>`</td>
+  <td>Identical to `T`</td>
+  <td></td>
+</tr>
+<tr>
+  <td>`future_exception_t<SF>`</td>
+  <td>Convertible to `exception_ptr`</td>
+  <td></td>
 </tr>
 <tr>
   <td>`sf.via(e)`</td>
@@ -288,21 +298,6 @@ Descriptive Variable Definitions
     **Returns:** A `SemiFuture` that completes when `rcf` would have completed.
 
     **Effects:** Erasing the executor from `rcf`.
-  </td>
-</tr>
-<tr>
-  <td>`rcf.via(e)`</td>
-  <td>Implementation-defined</td>
-  <td>
-    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
-
-    **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
-
-    **Success:** Succeeds if:
-     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
-     * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
-
-     Fails at compile-time otherwise.
   </td>
 </tr>
 </table>
