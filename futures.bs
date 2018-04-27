@@ -1,14 +1,17 @@
 <pre class='metadata'>
 Title: Futures
 Shortname: PTODO
+URL: wg21.link/PTODO
 Revision: 0
 Audience: SG1
 Status: D
 Group: WG21
-URL: TODO
 !Source: <a href="https://github.com/executors/futures/blob/master/futures.bs">github.com/executors/futures/blob/master/futures.bs</a>
+No Abstract: yes
+Markup Shorthands: markdown yes
+Markup Shorthands: biblio yes
 Editor: Lee Howes, Facebook, lwh@fb.com
-Editor: Bryce Adelstein-Lelbach, Nvidia, brycelelbach@gmail.com
+Editor: Bryce Adelstein Lelbach, brycelelbach@gmail.com
 Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
 Abstract: Executor-compatible Futures for C++.
 </pre>
@@ -16,24 +19,300 @@ Abstract: Executor-compatible Futures for C++.
 Introduction {#intro}
 =====================
 
-Introduction here.
+TODO
 
+Proposed New Wording
+====================
 
-<code>SemiFuture</code> requirements {#semifuture}
-=========================
+Futures
+-------
 
+1.  A <dfn>future</dfn> is an object that represents a value that may not available yet.
 
+2.  A [=future=] consists of two components: content and status.
 
+3.  A <dfn data-lt="future's content|future content">future's content</dfn> is either a value or error.
 
-<code>ContinuableFuture</code> requirements {#continuablefuture}
-================================
+4.  A <dfn data-lt="future's status|future status">future's status</dfn> is either [=not ready=], [=ready=] or [=consumed=].
 
+5.  A <dfn data-lt="not ready|not ready future">not ready future</dfn> is a future whose content is not available yet.
 
+6.  A not ready future may be <dfn data-lt="made ready|make ready">made ready</dfn>, an operation that atomically sets the [=future's content=] and changes [=future's status|its status=] to [=ready=].
 
-Type: <code>std::standard_promise</code> {#type_standard_promise}
-=============================
+7.  A <dfn data-lt="ready|ready future">ready future</dfn> is a future whose content is available.
 
-```c++
+8.  A [=ready future=] may be <dfn data-lt="made consumed|make consumed">made consumed</dfn>, an operation that atomically invalidates the [=future's content=] and changes [=future's status|its status=] to [=consumed=].
+
+9.  A <dfn data-lt="consumed|consumed future">consumed future</dfn> is a future whose [=future content|content=] was available previously and is now unavailable.
+
+10. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=consumed future=].
+
+`FutureContinuation` Requirements
+----------------------------
+
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> associated with a future.
+
+2.  A `FutureContinuation` type shall meet the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`FC<T>`</td>
+  <td>A `FutureContinuation` type for type `T`.</td>
+</tr>
+<tr>
+  <td>`fc`</td>
+  <td>A value of type `FC<T>`.</td>
+</tr>
+<tr>
+  <td>`v`</td>
+  <td>A value of type `T`, `T&`, `const T&`, or `T&&`.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `std::exception_ptr`, or `std::exception_ptr&&`.</td>
+</tr>
+</table>
+
+`FutureContinuation` Requirements
+
+Implements at least one of:
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`ft(v)`</td>
+  <td>R</td>
+  <td>
+    Execute associated code inline with the caller. May throw.
+  </td>
+</tr>
+<tr>
+  <td>`ft(exception_tag_t, e)`</td>
+  <td>R</td>
+  <td>
+    Execute associated code inline with the caller.
+
+    May throw.
+
+    If both `ft(v)` and `ft(exception_tag_t, e)` are provided on the same `FutureContinuation` then return type `R` should be the same for all overloads of the two operations.
+  </td>
+</tr>
+</table>
+
+</center>
+
+`SemiFuture` Requirements
+-------------------------
+
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+1. A <dfn>semi future</dfn> is a [=future=] that is not bound to an executor.
+
+2. A `SemiFuture` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`SF<T>`</td>
+  <td>A `SemiFuture` type for type `T`.</td>
+</tr>
+<tr>
+  <td>`sf`</td>
+  <td>An r-value of type `SF<T>`.</td>
+</tr>
+<tr>
+  <td>`E`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `E`.</td>
+</tr>
+</table>
+
+`SemiFuture` Requirements
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`sf.via(e)`</td>
+  <td>Implementation-defined</td>
+  <td>
+    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+
+    **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
+
+    **Success:** Succeeds if:
+     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+     * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+
+     Fails at compile-time otherwise.
+  </td>
+</tr>
+</table>
+
+</center>
+
+`ContinuableFuture` Requirements
+--------------------------------
+
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+1. A <dfn>continuable future</dfn> is a [=future=] that is bound to an executor and can have continuations attached to it.
+
+2. A `ContinuableFuture` shall meet the `SemiFuture` requirements and the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`E`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `E`.</td>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`CF<E, T>`</td>
+  <td>A `ContinuableFuture` type for executor type `E` and value type `T`.</td>
+</tr>
+<tr>
+  <td>`cf`</td>
+  <td>A value of type `CF<E, F>`.</td>
+</tr>
+<tr>
+  <td>`rcf`</td>
+  <td>An r-value of type `CF<E, F>`.</td>
+</tr>
+<tr>
+  <td>`SF<T>`</td>
+  <td>A `SemiFuture` type for type `T`.</td>
+</tr>
+<tr>
+  <td>`G`</td>
+  <td>A type that satisfies the requirements of `FutureContinuation`.</td>
+</tr>
+<tr>
+  <td>`g`</td>
+  <td>An object of type `G`.</td>
+</tr>
+</table>
+
+`ContinuableFuture` Requirements
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`cf.get_executor()`</td>
+  <td>`E`</td>
+  <td>
+    **Returns:** The executor that the future is bound to.
+
+    **Throws:** Nothing.
+  </td>
+</tr>
+<tr>
+  <td>`rcf.then(g)`</td>
+  <td>
+    **If** `INVOKE(declval<G>(), declval<T>())` is valid:
+
+      `CF<E, decltype(INVOKE(declval<G>(), declval<T>()))>`
+
+    **Otherwise**:
+
+      `CF<E, T>`
+  </td>
+  <td>
+    **Returns:** A `ContinuableFuture` that is bound to the executor `e` and that wraps the type returned by execution of either the value or exception operations implemented in the `FutureContinuation`.
+
+    **Effects:**
+      * If `cf` completes with a value, the value form of the `FutureContinuation` will run.
+      * If `cf` completes with an exception the exception form will be called, parameterised with a `std::exception_ptr`.
+      * In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
+  </td>
+</tr>
+<tr>
+  <td>`rcf.semi()`</td>
+  <td>
+    `SF<T>`
+  </td>
+  <td>
+    **Returns:** A `SemiFuture` that completes when `rcf` would have completed.
+
+    **Effects:** Erasing the executor from `rcf`.
+  </td>
+</tr>
+<tr>
+  <td>`rcf.via(e)`</td>
+  <td>Implementation-defined</td>
+  <td>
+    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+
+    **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
+
+    **Success:** Succeeds if:
+     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+     * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+
+     Fails at compile-time otherwise.
+  </td>
+</tr>
+</table>
+
+</center>
+
+`std::standard_promise`
+-----------------------
+
+```
 template<class T>
 class standard_promise {
 public:
@@ -50,10 +329,10 @@ using thread-local storage and should not be constructible. It is not copyable
 and its lifetime is not guaranteed to outlive a single continuation chain
 starting with a promise.
 
-Type: <code>std::standard_semi_future</code> {#type_standard_semi_future}
-=================================
+`std::standard_semi_future`
+---------------------------
 
-```c++
+```
 template<class T>
 class standard_semi_future {
 public:
@@ -63,37 +342,20 @@ public:
     standard_semi_future(T);
     standard_semi_future(standard_semi_future&&) = default;
     standard_semi_future(const standard_semi_future&) = delete;
-
-    // standard_semi_future may be constructed from any type
-    // meeting the ContinuableFuture requirements
-    template<class ContinuableFuture>
-    standard_semi_future(ContinuableFuture&&);
-
-    // get and get_expected are both destructive.
-    // get will throw on exception. get_expected will return either a value
-    // or an exception.
-    T get() &&;
-    expected<T, exception_ptr> get_expected() noexcept &&;
-
-    // Wait is not destructive.
-    standard_semi_future& wait() noexcept &;
-    standard_semi_future&& wait() noexcept &&;
-
-    bool is_ready() noexcept;
+    standard_semi_future(standard_continuable_future<T>&&);
 
     template<class EI, class EO>
     // Where EI and EO are  one-way or two-way executors.
     // EO must be derived from EI through the executor
     // requirement API.
-    standard_continuable_future<T, EO> on(EI);
+    standard_continuable_future<T, EO> via(EI) &&;
 };
 ```
 
+`std::standard_continuable_future`
+----------------------------------
 
-Type: <code>std::standard_continuable_future</code>
-========================================
-
-```c++
+```
 template<class T, class E>
 class standard_continuable_future {
 public:
@@ -110,23 +372,13 @@ public:
     // and will either be an instance of standard_continuable_future or
     // executor_future_t<EO, T> where EO has the same executor properties as
     // E but with the addition of the twoway_t property.
-    ReturnFuture then(F&&) &&;
-
-    template<class ReturnFuture, class F, class ResultFactory, class SharedFactory>
-    // Where ReturnFuture will satisfy the requirements of ContinuableFuture,
-    // where is_same_t<ReturnFuture::value_type, result_of_t<decay_t<ResultFactory>>
-    // and will either be an instance of standard_continuable_future or
-    // executor_future_t<EO, T> where EO has the same executor properties as
-    // E but with the addition of the twoway_t property.
-    ReturnFuture bulk_then(F&&, executor_shape_t<Ex>, SharedFactory&&, ResultFactory&&) &&;
-
-    standard_continuable_future then_error(F&&) &&;
+    ReturnFuture then(FutureContinuation&&) &&;
 
     template<class EI, class EO>
     // Where EI and EO are  one-way or two-way executors.
     // EO must be derived from EI through the executor
     // requirement API.
-    standard_continuable_future<T, EO> on(EI);
+    standard_continuable_future<T, EO> via(EI) &&;
 
     E get_executor() const;
     standard_semi_future<T> semi() &&;
@@ -134,9 +386,9 @@ public:
 };
 ```
 
-TODO
-====
+TODO:
+Return types of continuations.
+Split above into detail sections for comments.
 
-- Remove this section
-- Return types of continuations.
-- Split above into detail sections for comments.
+Proposed Changes to Executors
+=============================
