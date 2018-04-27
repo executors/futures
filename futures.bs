@@ -708,6 +708,7 @@ standard_semi_future(const standard_semi_future& rhs);
  * *Postconditions:* valid() returns the same value as rhs.valid() prior to the
     constructor invocation. The validity of rhs does not change.
 
+<<<<<<< HEAD
 <br/>
 ```
 template<class E>
@@ -1093,6 +1094,14 @@ standard_shared_future<T, EI> via(EI ex);
       on which continuations will be enqueued to a new executor.
 
  * *Returns:* A standard_shared_future modified to carry executor ex of type EI.
+=======
+- `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
+    as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_error()`.
+    The object `ff` is constructed before the return of `on_error()` and destroyed when `fc` is destroyed.
+- `fc` cannot be invoked with one argument. [*Note:* This means that calling
+    `fc` with one argument must fail to compile *— end note*]
+>>>>>>> Added on_value_or_error()
 
  * *Requires:*
    * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
@@ -1290,12 +1299,23 @@ and an implementation-defined token type that will be interpreted as a valid
 input future by calls to `then_execute` or `bulk_then_execute` and that is
 satisfied by calling `set_value` or `set_exception` on the promise.
 
+<<<<<<< HEAD
 The value returned from `execution::query(e, promise_contract_t<T>)`, where `e`
 is an executor and `T` is a type, should be unique for any given call.
 When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 `std::pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
+=======
+- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_expected()`.
+    The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
+- `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
+    as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_expected()`.
+    The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
+>>>>>>> Added on_value_or_error()
 
 ```
 template<class Executor>
@@ -1309,6 +1329,30 @@ template<class Executor>
  * *Remarks:* This function shall not participate in overload resolution unless
   `executor_future_t<Executor, T>` is `std::future<T>`.
 
+```c++
+template <class F, class G>
+/* see below */ on_value_or_error(F f, G g);
+```
+
+**Requires:**
+  - For a (possibly cv-qualified) object type `T` and a (possibly cv-qualified)
+    object of type `E`, the expressions 
+    `INVOKE(decltype<F>(), decltype<T>())` 
+    `INVOKE(decltype<G>(), decltype<E>())` must be valid.
+  - `F` and `G` must meet the requirements of `MoveConstructible`
+
+**Returns:**
+An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+following operational semantics:
+
+- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_value_or_error()`.
+    The object `ff` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
+- `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
+    as `INVOKE(gg, e)`, where `gg` is an instance of `G` move-constructed from the
+    argument to `on_value_or_error()`.
+    The object `gg` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
 
 1.3.3.2 Cancellable promise contract
 --------------------
