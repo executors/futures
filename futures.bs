@@ -715,7 +715,7 @@ following operational semantics:
 
 - `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
     as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_error()` if `F`.
+    argument to `on_error()`.
     The object `ff` is constructed before the return of `on_error()` and destroyed when `fc` is destroyed.
 - `fc` cannot be invoked with one argument. [*Note:* This means that calling
     `fc` with one argument must fail to compile *— end note*]
@@ -739,16 +739,40 @@ following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
     as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_expected()` if `F`.
+    argument to `on_expected()`.
     The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
 - `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
     as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_expected()` if `F`.
+    argument to `on_expected()`.
     The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
 
 
 <!-- Note: I've omitted on_visitor() because it is identical in terms of operational semantics to on_expected() and/or requires the pair of types T, E to be explicitly defined -->
 
+```c++
+template <class F, class G>
+/* see below */ on_value_or_error(F f, G g);
+```
+
+**Requires:**
+  - For a (possibly cv-qualified) object type `T` and a (possibly cv-qualified)
+    object of type `E`, the expressions 
+    `INVOKE(decltype<F>(), decltype<T>())` 
+    `INVOKE(decltype<G>(), decltype<E>())` must be valid.
+  - `F` and `G` must meet the requirements of `MoveConstructible`
+
+**Returns:**
+An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+following operational semantics:
+
+- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_value_or_error()`.
+    The object `ff` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
+- `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
+    as `INVOKE(gg, e)`, where `gg` is an instance of `G` move-constructed from the
+    argument to `on_value_or_error()`.
+    The object `gg` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
 
 
 
