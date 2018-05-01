@@ -448,7 +448,9 @@ Wording supplements current text in [p0443](https://wg21.link/P0443).
 1.1.x `Promise` requirements
 --------------------
 
-A type `P` meets the `Promise` requirements for some value type `T` if an instance `p` of `P` satisfies the requirements in the table below.
+A type `P` meets the `Promise` requirements for some value type `T` if an
+instance `p` of `P` satisfies the requirements in the table below. `T` may be
+void.
 
 <table>
   <tr>
