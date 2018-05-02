@@ -509,3 +509,52 @@ When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
 query is a `std::pair` where the first value is a `std::promise<T>` and the
 second is a `std::future<T>` such that the future was retrieved from the
 promise.
+
+
+1.3.3.2 Cancellable promise contract
+--------------------
+
+```
+template <T, C>
+struct cancellable_promise_contract_t
+{
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type
+    = std::pair<std::promise<T>, std::future<T>>;
+
+  template<class Executor>
+  static constexpr decltype(auto) static_query_v
+    = Executor::query(promise_contract_t());
+
+  CancellationCallback cancellation_callback;
+};
+```
+
+The `cancellable_promise_contract_t` property can be used only with query,
+which returns the execution context associated with the executor.
+`cancellable_promise_contract_t` differs from `promise_contract_t` in that the
+query carries a cancellation callback, `cancellation_callback`, that will be
+called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
+cancellation of the task dependent on the future resulting from the
+`cancellable_promise_contract_t` query.
+
+The result of a query of the `cancellable_promise_contract_t` property applied
+to a `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a
+`Promise` and an implementation-defined token type that will be interpreted as
+a valid input future by calls to `then_execute` or `bulk_then_execute`, that
+is satisfied by calling `set_value` or `set_exception` on the promise and that
+supports cancellation by the executor.
+
+The value returned from
+`execution::query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
+where `e` is an executor and `T` is a type, should be unique for any given call.
+When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
+`std::pair` where first value is an instance of a type matching the `Promise`
+requirements and the second is a token type that `e` will interpret as a valid
+future parameter to calls to `then_execute` or `bulk_then_execute`.
+When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
+query is a `std::pair` where the first value is a `std::promise<T>` and the
+second is a `std::future<T>` such that the future was retrieved from the
+promise.
