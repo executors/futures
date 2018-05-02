@@ -771,8 +771,8 @@ template<class Future>
 
 *Effects:* Blocks the calling thread until `f` becomes ready.
 
-*Synchronization:* The destruction of the task that generates `f`'s value
-  synchronizes-with the corresponding `future_wait` return.
+*Synchronization:* The destruction of the continuation that generates `f`'s
+  value synchronizes-with the corresponding `future_wait` return.
 
 `std::this_thread::future_get`
 ----------------------------------
@@ -797,8 +797,8 @@ template<class Future>
    to the caller.
  * If `f` becomes ready with an exception, rethrows the exception.
 
-*Synchronization:* The destruction of the task that generates `f`'s value
- synchronizes-with the corresponding `future_get` return.
+*Synchronization:* The destruction of the continuation that generates `f`'s
+ value synchronizes-with the corresponding `future_get` return.
 
 *Throws:* If `f` becomes ready with an exception, that exception is rethrown.
 
