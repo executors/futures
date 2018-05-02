@@ -345,7 +345,8 @@ Descriptive Variable Definitions
       the associated shared state of the resulting `ContinuableFuture`.
 
     **Synchronization:** The destruction of the continuation that generates
-      `rcf`'s value synchronizes-with the start of `g`.
+      `rcf`'s value synchronizes-with the start of `g` and with the destruction
+      of `g`.
   </td>
 </tr>
 <tr>
