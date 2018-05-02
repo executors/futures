@@ -277,7 +277,8 @@ Descriptive Variable Definitions
       * In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
 
     **Synchronization:** The destruction of the continuation that generates
-      `rcf`'s value synchronizes-with the start of `g`.
+      `rcf`'s value synchronizes-with the start of `g` and with the destruction
+      of `g`.
   </td>
 </tr>
 <tr>
