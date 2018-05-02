@@ -815,7 +815,7 @@ control of launch:
  * then
 
 The first two could be considered *immediately launched*. That is that once
-handed to the executor,they may start immediately, assuming the internal
+handed to the executor, they may start immediately, assuming the internal
 executor policies and resources allow it. This makes them very useful for
 lazy-launch scenarios.
 
@@ -829,8 +829,8 @@ This means that work is enqueued only after all dependencies are satisfied.
 Then-executors, on the other hand, are intended for explicitly deferred work.
 Work can be handed to the executor dependent on prior work, before that prior
 work is completed.
-This design is fundamentally different, but offers scope for optimisation by
-the executor of chains of dependencies that is can batch, without running
+This design is fundamentally different, but offers scope for optimization by
+the executor of chains of dependencies that it can batch, without running
 additional code on completion of each.
 
 The current executor design is intentionally generic - it makes few requirements
@@ -838,7 +838,7 @@ on the future types it can use as input dependencies for the `then_execute` and
 `bulk_then_execute` operations.
 We can assume that for a future returned by a previous call to `then_execute`
 or `bulk_then_execute`, the executor understands the implementation of the
-future can can perform whatever depenence tracking and optimisation necessary.
+future can can perform whatever dependence tracking and optimization necessary.
 This then is an implementation detail.
 
 However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
