@@ -343,6 +343,9 @@ Descriptive Variable Definitions
       any exception thrown by either, in the associated shared state of the
       resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
       the associated shared state of the resulting `ContinuableFuture`.
+
+    **Synchronization:** The destruction of the continuation that generates
+      `rcf`'s value synchronizes-with the start of `g`.
   </td>
 </tr>
 <tr>
@@ -749,6 +752,55 @@ bool valid() const noexcept;
 ```
 
 *Returns:* Returns true if this is a valid future. False otherwise.
+
+`std::this_thread::future_wait`
+----------------------------------
+In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
+```
+template<class Future>
+  void future_wait(Future& f) noexcept;
+```
+
+To [thread.thread.this] add:
+```
+template<class Future>
+  void std::this_thread::future_wait(Future& f) noexcept;
+```
+
+*Requires:* SemiFuture<Future>
+
+*Effects:* Blocks the calling thread until `f` becomes ready.
+
+*Synchronization:* The destruction of the task that generates `f`'s value
+  synchronizes-with the corresponding `future_wait` return.
+
+`std::this_thread::future_get`
+----------------------------------
+In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
+```
+template<class Future>
+  auto future_get(Future& f) -> Future::value_type;
+```
+
+To [thread.thread.this] add:
+```
+template<class Future>
+  auto std::this_thread::future_get(std::decay_t<Future>&& f)
+    -> std::decay_t<Future>::value_type;
+```
+*Requires:* SemiFuture<Future>
+
+*Effects:* Blocks the calling thread until `f` becomes ready.
+
+*Returns:*
+ * If `f` becomes ready with a value, moves the value from `f` and returns it
+   to the caller.
+ * If `f` becomes ready with an exception, rethrows the exception.
+
+*Synchronization:* The destruction of the task that generates `f`'s value
+ synchronizes-with the corresponding `future_get` return.
+
+*Throws:* If `f` becomes ready with an exception, that exception is rethrown.
 
 Proposed Changes to Executors
 =============================
