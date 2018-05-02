@@ -105,14 +105,16 @@ Implements at least one of:
   </td>
 </tr>
 <tr>
-  <td>`ft(exception_tag_t, e)`</td>
+  <td>`ft(exception_arg, e)`</td>
   <td>R</td>
   <td>
     Execute associated code inline with the caller.
 
     May throw.
 
-    If both `ft(v)` and `ft(exception_tag_t, e)` are provided on the same `FutureContinuation` then return type `R` should be the same for all overloads of the two operations.
+    If both `ft(v)` and `ft(exception_arg, e)` are provided on the same
+    `FutureContinuation` then return type `R` should be the same for all
+    overloads of the two operations.
   </td>
 </tr>
 </table>
@@ -224,7 +226,10 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`T`</td>
-  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+  <td>
+    Any (possibly cv-qualified) object type that is not an array.
+    May be void.
+  </td>
 </tr>
 <tr>
   <td>`CF<E, T>`</td>
@@ -250,6 +255,26 @@ Descriptive Variable Definitions
   <td>`g`</td>
   <td>An object of type `G`.</td>
 </tr>
+<tr>
+ <td>`val`</td>
+ <td>The value contained within the successfully completed future RCF.
+</tr>
+<tr>
+ <td>`ex`</td>
+ <td>The exception contained within the exceptionally completed future RCF.
+</tr>
+<tr>
+  <td>`NORMAL`</td>
+  <td>
+    The expression `DECAY_COPY(std::forward<F>(g))(val)` if
+    `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void,
+  </td>
+</tr>
+<tr>
+  <td>`EXCEPTIONAL`</td>
+  <td>
+    The expression `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+  </td>
 </table>
 
 `ContinuableFuture` Requirements
@@ -272,7 +297,8 @@ Descriptive Variable Definitions
 <tr>
   <td>`rcf.then(g)`</td>
   <td>
-    **If** `INVOKE(declval<G>(), declval<T>())` is valid:
+    **If** `T` is non-void and `INVOKE(declval<G>(), declval<T>())` or if `T` is
+      `void` and `INVOKE(declval<G>())` is valid:
 
       `CF<E, decltype(INVOKE(declval<G>(), declval<T>()))>`
 
@@ -281,12 +307,40 @@ Descriptive Variable Definitions
       `CF<E, T>`
   </td>
   <td>
-    **Returns:** A `ContinuableFuture` that is bound to the executor `e` and that wraps the type returned by execution of either the value or exception operations implemented in the `FutureContinuation`.
+    **Returns:** A `ContinuableFuture` that is bound to the executor `e` and
+    that wraps the type returned by execution of either the value or exception
+    operations implemented in the continuation.
 
     **Effects:**
-      * If `cf` completes with a value, the value form of the `FutureContinuation` will run.
-      * If `cf` completes with an exception the exception form will be called, parameterised with a `std::exception_ptr`.
-      * In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
+      When `rcf` becomes nonexceptionally ready, and if `NORMAL` is a
+      well-formed expression, creates an execution agent which invokes `NORMAL`
+      at most once, with the call to `DECAY_COPY` being evaluated in the thread
+      that called `then_execute`.
+
+      Otherwise, when `rcf` becomes exceptionally ready, if `EXCEPTIONAL` is a
+      well-formed expression, creates an execution agent which invokes
+      `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
+      in the thread that called `then_execute`.
+
+      If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
+      `decltype(EXCEPTIONAL)` shall be convertible to `R`.
+
+      If `NORMAL` is not a well-formed expression and `EXCEPTIONAL` is a
+      well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
+      `decltype(val)`.
+
+      If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expresions, the
+      invocation of `then_execute` shall be ill-formed.
+
+      May block pending completion of `NORMAL` or `EXCEPTIONAL`.
+
+      The invocation of `then_execute` synchronizes with
+      (C++Std [intro.multithread]) the invocation of `f`.
+
+      Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
+      any exception thrown by either, in the associated shared state of the
+      resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
+      the associated shared state of the resulting `ContinuableFuture`.
   </td>
 </tr>
 <tr>
