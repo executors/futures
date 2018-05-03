@@ -54,7 +54,7 @@ Futures
 
 1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> associated with a future.
 
-2.  A `FutureContinuation` type shall meet the requirements described in the Tables below.
+2.  A `FutureContinuation` type shall meet the `MoveConstructible` requirements and meet the requirements described in the Tables below.
 
 <center>
 
