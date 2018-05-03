@@ -266,15 +266,17 @@ Descriptive Variable Definitions
 <tr>
   <td>`NORMAL`</td>
   <td>
-    The expression `DECAY_COPY(std::forward<F>(g))(val)` if
+    The expression `DECAY_COPY(std::forward<F>(g))(std::move(val))` if
     `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void,
   </td>
 </tr>
 <tr>
   <td>`EXCEPTIONAL`</td>
   <td>
-    The expression `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+    The expression
+    `DECAY_COPY(std::forward<F>(f))(exception_arg, std::move(ex))`,
   </td>
+</tr>
 </table>
 
 `ContinuableFuture` Requirements
@@ -329,7 +331,7 @@ Descriptive Variable Definitions
       well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
       `decltype(val)`.
 
-      If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expresions, the
+      If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
       invocation of `then_execute` shall be ill-formed.
 
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
@@ -352,6 +354,122 @@ Descriptive Variable Definitions
     **Returns:** A `SemiFuture` that completes when `rcf` would have completed.
 
     **Effects:** Erasing the executor from `rcf`.
+  </td>
+</tr>
+</table>
+
+</center>
+
+
+`SharedFuture` Requirements
+--------------------------------
+
+<!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+1. A <dfn>shared future</dfn> is a [=future=] that is copyable, is bound to an executor and that allows one or more continuation to be attached to it.
+
+2. A `SharedFuture` shall meet the `ContinuableFuture` requirements, the `CopyConstructible` requirements, the `CopyAssignable` requirements and the requirements described in the Tables below.
+
+<center>
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`E`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>A value of type `E`.</td>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+</tr>
+<tr>
+  <td>`SHF<E, T>`</td>
+  <td>A `SharedFuture` type for executor type `E` and value type `T`.</td>
+</tr>
+<tr>
+  <td>`shf`</td>
+  <td>A value of type `CF<E, F>`.</td>
+</tr>
+<tr>
+  <td>`NORMAL`</td>
+  <td>
+    The expression `DECAY_COPY(std::forward<F>(g))(val)` if
+    `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void,
+  </td>
+</tr>
+<tr>
+  <td>`EXCEPTIONAL`</td>
+  <td>
+    The expression
+    `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+  </td>
+</tr>
+</table>
+
+`SharedFuture` Requirements
+
+<table border=1>
+<tr>
+  <th>Expression</th>
+  <th>Return Type</th>
+  <th>Operational Semantics</th>
+</tr>
+<tr>
+  <td>`rcf.then(g)`</td>
+  <td>
+    **If** `T` is non-void and `INVOKE(declval<G>(), declval<T>())` or if `T` is
+      `void` and `INVOKE(declval<G>())` is valid:
+
+      `CF<E, decltype(INVOKE(declval<G>(), declval<T>()))>`
+
+    **Otherwise**:
+
+      `CF<E, T>`
+  </td>
+  <td>
+    **Returns:** A `ContinuableFuture` that is bound to the executor `e` and
+    that wraps the type returned by execution of either the value or exception
+    operations implemented in the continuation.
+
+    **Effects:**
+      When `rcf` becomes nonexceptionally ready, and if `NORMAL` is a
+      well-formed expression, creates an execution agent which invokes `NORMAL`
+      at most once, with the call to `DECAY_COPY` being evaluated in the thread
+      that called `then_execute`.
+
+      Otherwise, when `rcf` becomes exceptionally ready, if `EXCEPTIONAL` is a
+      well-formed expression, creates an execution agent which invokes
+      `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
+      in the thread that called `then_execute`.
+
+      If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
+      `decltype(EXCEPTIONAL)` shall be convertible to `R`.
+
+      If `NORMAL` is not a well-formed expression and `EXCEPTIONAL` is a
+      well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
+      `decltype(val)`.
+
+      If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
+      invocation of `then_execute` shall be ill-formed.
+
+      May block pending completion of `NORMAL` or `EXCEPTIONAL`.
+
+      The invocation of `then_execute` synchronizes with
+      (C++Std [intro.multithread]) the invocation of `f`.
+
+      Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
+      any exception thrown by either, in the associated shared state of the
+      resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
+      the associated shared state of the resulting `ContinuableFuture`.
   </td>
 </tr>
 </table>
