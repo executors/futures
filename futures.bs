@@ -459,7 +459,7 @@ void.
     <th>Operational semantics</th>
   </tr>
   <tr>
-    <td>`p.value(T)`</td>
+    <td>`p.set_value(T)`</td>
     <td>void</td>
     <td>Completes the promise with a value.</td>
   </tr>
