@@ -815,7 +815,7 @@ template<class Future>
 
  * *Throws:* If `f` becomes ready with an exception, that exception is rethrown.
 
-Proposed Changes to Executors
+Proposed Addition to Executors P0443
 =============================
 
 [p0443](https://wg21.link/P0443) defines a collection of executor types intended
@@ -985,3 +985,87 @@ When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
 query is a `std::pair` where the first value is a `std::promise<T>` and the
 second is a `std::future<T>` such that the future was retrieved from the
 promise.
+
+
+Proposed Modifications to Executors P0443
+=============================
+[p0443](https://wg21.link/P0443) currently requires `std::experimental::future`
+due to the absence of a complete future type in the core standard.
+
+This paper provides the wider set of tasks and as a result, the current text in
+[p0443](https://wg21.link/P0443) should be modified as follows.
+
+
+Future requirements
+--------------------
+Drop this entire section and replace with the `Future` requirements from this
+paper.
+
+
+twoway_t customization points
+--------------------
+**Replace:**
+
+    it is `std::experimental::future<T>`
+
+**with:**
+
+    it is `std::standard_continuable_future<T, E1>` such that a call to
+   `get_executor()` returns a copy of `e1`
+
+
+single_t customization points
+--------------------
+**Replace:**
+
+    it is `std::experimental::future<T>`
+
+**with:**
+
+    it is `std::standard_continuable_future<T, E1>` such that a call to
+    `get_executor()` returns a copy of `e1`
+
+
+Properties to indicate if blocking and directionality may be adapted
+--------------------
+Remove `twoway_t` from the **Requirements** column of hte table.
+
+Remove note referring to `std::experimental::future`.
+
+[*Note:* `std::experimental::future` is not used and the replacemnt does not
+ have a blocking wait so this is no longer relevant.]
+
+
+Class template executor
+--------------------
+**Replace:**
+```
+  template<class Function>
+    std::experimental::future<result_of_t<decay_t<Function>()>>
+      twoway_execute(Function&& f) const
+```
+
+**With:**
+```
+  template<class Function>
+    std::standard_semi_future<result_of_t<decay_t<Function>()>>
+      twoway_execute(Function&& f) const
+```
+
+**Replace:**
+```
+  template<class Function, class ResultFactory, class SharedFactory>
+    std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
+      bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
+
+**With:**
+```
+  template<class Function, class ResultFactory, class SharedFactory>
+    std::standard_semi_future<result_of_t<decay_t<ResultFactory>()>>
+      bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
+
+[*Note:* We lose the executor information here. Potentially we should encode
+ the future type, including its executor, in the properties of the polymorphic
+ wrapper.]
