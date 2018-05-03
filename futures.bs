@@ -1069,3 +1069,75 @@ Class template executor
 [*Note:* We lose the executor information here. Potentially we should encode
  the future type, including its executor, in the properties of the polymorphic
  wrapper.]
+
+
+executor operations
+--------------------
+**Replace:**
+
+```
+template<class Function>
+  std::experimental::future<result_of_t<decay_t<Function>()>>
+    twoway_execute(Function&& f) const
+```
+
+**With:**
+
+```
+template<class Function>
+  /* implementation-defined future type */
+    twoway_execute(Function&& f) con
+```
+
+**Replace:**
+
+Returns: A future, whose shared state is made ready when the future returned by
+e.twoway_execute(f2) is made ready, containing the result of f1() or any
+exception thrown by f1(). [Note: e2.twoway_execute(f2) may return any future
+type that satisfies the Future requirements, and not necessarily
+std::experimental::future. One possible implementation approach is for the
+polymorphic wrapper to attach a continuation to the inner future via that
+object's then() member function. When invoked, this continuation stores the
+result in the outer future's associated shared and makes that shared state
+ready. --end note]
+
+**With:**
+
+*Returns:* A value whose type satisfies the `ContinuableFuture` requirements.
+The returned future is made ready when `f1()` completes execution, with either
+the result of f1() or any exception thrown by f1().
+
+
+**Replace:**
+
+template<class Function, class ResultFactory, class SharedFactory>
+  std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
+    void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+
+
+**With:**
+```
+template<class Function, class ResultFactory, class SharedFactory>
+  /* implementation-defined future type */
+     bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
+
+
+**Replace:**
+
+*Returns:* A future, whose shared state is made ready when the future returned
+by e.bulk_twoway_execute(f2, n, rf2, sf2) is made ready, containing the result
+in r1 (if decltype(rf1()) is non-void) or any exception thrown by an
+invocationf1. [Note: e.bulk_twoway_execute(f2) may return any future type that
+satisfies the Future requirements, and not necessarily std::experimental::future.
+One possible implementation approach is for the polymorphic wrapper to attach a
+continuation to the inner future via that object's then() member function. When
+invoked, this continuation stores the result in the outer future's associated
+shared and makes that shared state ready. --end note]
+
+**With:**
+
+*Returns:* A value whose type satisfies the `ContinuableFuture` requirements.
+The returned future is made ready when `f1()` completes execution, with either
+the result in `r1` (if `decltype(rf1())` is non-void) or any exception thrown by
+an invocation `f1`.
