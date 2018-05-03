@@ -387,3 +387,171 @@ Split above into detail sections for comments.
 
 Proposed Changes to Executors
 =============================
+
+[p0443](https://wg21.link/P0443) defines a collection of executor types intended
+for use managing the execution of tasks on resources.
+There are three fundamental executor categories that cover directionality and
+control of launch:
+ * one-way
+ * two-way
+ * then
+
+The first two could be considered *immediately launched*. That is that once
+handed to the executor,they may start immediately, assuming the internal
+executor policies and resources allow it. This makes them very useful for
+lazy-launch scenarios.
+
+Lazy launch scenarios are common in callback-based code, and in a wide range of
+future library implementations such as
+[folly](https://github.com/facebook/folly/tree/master/folly/futures).
+In these designs, a callback is executed on completion of some asynchronous
+work, and that callback enqueues work into the executor.
+This means that work is enqueued only after all dependencies are satisfied.
+
+Then-executors, on the other hand, are intended for explicitly deferred work.
+Work can be handed to the executor dependent on prior work, before that prior
+work is completed.
+This design is fundamentally different, but offers scope for optimisation by
+the executor of chains of dependencies that is can batch, without running
+additional code on completion of each.
+
+The current executor design is intentionally generic - it makes few requirements
+on the future types it can use as input dependencies for the `then_execute` and
+`bulk_then_execute` operations.
+We can assume that for a future returned by a previous call to `then_execute`
+or `bulk_then_execute`, the executor understands the implementation of the
+future can can perform whatever depenence tracking and optimisation necessary.
+This then is an implementation detail.
+
+However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
+This amounts to a standard API for triggering deferred work.
+
+Proposed solution
+-------------------
+
+To solve this we provide two things:
+ * A promise concept, that allows setting of value and/or exception.
+ * A mechanism to retrieve from an executor a pair of a promise and a future, such that the future is a valid input dependence for a call to `then_execute` or `bulk_then_execute`.
+
+The promise is a write-only concept. This simplifies the definition and improves flexibility.
+
+The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
+
+Proposed New Wording
+====================
+
+Wording supplements current text in [p0443](https://wg21.link/P0443).
+
+1.1.x `Promise` requirements
+--------------------
+
+A type `P` meets the `Promise` requirements for some value type `T` if an
+instance `p` of `P` satisfies the requirements in the table below. `T` may be
+void.
+
+<table>
+  <tr>
+    <th>Expression</th>
+    <th>Return Type</th>
+    <th>Operational semantics</th>
+  </tr>
+  <tr>
+    <td>`p.set_value(T)`</td>
+    <td>void</td>
+    <td>Completes the promise with a value.</td>
+  </tr>
+  <tr>
+    <td>`p.set_exception(std::exception_ptr)`</td>
+    <td>void</td>
+    <td>Completes the promise with an exception wrapped in a `std::exception_ptr`.</td>
+  </tr>
+</table>
+
+
+1.3.3.2 Promise contract
+--------------------
+
+```
+template <T>
+struct promise_contract_t
+{
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type
+    = std::pair<std::promise<T>, std::future<T>>;
+
+  template<class Executor>
+  static constexpr decltype(auto) static_query_v
+    = Executor::query(promise_contract_t());
+};
+```
+
+The `promise_contract_t` property can be used only with query, which returns the
+execution context associated with the executor.
+
+The result of a query of the `promise_contract_t` property applied to a
+`ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a `Promise`
+and an implementation-defined token type that will be interpreted as a valid
+input future by calls to `then_execute` or `bulk_then_execute` and that is
+satisfied by calling `set_value` or `set_exception` on the promise.
+
+The value returned from `execution::query(e, promise_contract_t<T>)`, where `e`
+is an executor and `T` is a type, should be unique for any given call.
+When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
+`std::pair` where first value is an instance of a type matching the `Promise`
+requirements and the second is a token type that `e` will interpret as a valid
+future parameter to calls to `then_execute` or `bulk_then_execute`.
+When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
+query is a `std::pair` where the first value is a `std::promise<T>` and the
+second is a `std::future<T>` such that the future was retrieved from the
+promise.
+
+
+1.3.3.2 Cancellable promise contract
+--------------------
+
+```
+template <T, C>
+struct cancellable_promise_contract_t
+{
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type
+    = std::pair<std::promise<T>, std::future<T>>;
+
+  template<class Executor>
+  static constexpr decltype(auto) static_query_v
+    = Executor::query(promise_contract_t());
+
+  CancellationCallback cancellation_callback;
+};
+```
+
+The `cancellable_promise_contract_t` property can be used only with query,
+which returns the execution context associated with the executor.
+`cancellable_promise_contract_t` differs from `promise_contract_t` in that the
+query carries a cancellation callback, `cancellation_callback`, that will be
+called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
+cancellation of the task dependent on the future resulting from the
+`cancellable_promise_contract_t` query.
+
+The result of a query of the `cancellable_promise_contract_t` property applied
+to a `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a
+`Promise` and an implementation-defined token type that will be interpreted as
+a valid input future by calls to `then_execute` or `bulk_then_execute`, that
+is satisfied by calling `set_value` or `set_exception` on the promise and that
+supports cancellation by the executor.
+
+The value returned from
+`execution::query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
+where `e` is an executor and `T` is a type, should be unique for any given call.
+When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
+`std::pair` where first value is an instance of a type matching the `Promise`
+requirements and the second is a token type that `e` will interpret as a valid
+future parameter to calls to `then_execute` or `bulk_then_execute`.
+When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
+query is a `std::pair` where the first value is a `std::promise<T>` and the
+second is a `std::future<T>` such that the future was retrieved from the
+promise.
