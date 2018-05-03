@@ -287,6 +287,10 @@ Descriptive Variable Definitions
       * If `cf` completes with a value, the value form of the `FutureContinuation` will run.
       * If `cf` completes with an exception the exception form will be called, parameterised with a `std::exception_ptr`.
       * In either case the returned `ContinuableFuture` will complete with either the returned value or thrown exception.
+
+    **Synchronization:** The destruction of the continuation that generates
+      `rcf`'s value synchronizes-with the start of `g` and with the destruction
+      of `g`.
   </td>
 </tr>
 <tr>
@@ -381,9 +385,55 @@ public:
 };
 ```
 
-TODO:
-Return types of continuations.
-Split above into detail sections for comments.
+`std::this_thread::future_wait`
+----------------------------------
+In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
+```
+template<class Future>
+  void future_wait(Future& f) noexcept;
+```
+
+To [thread.thread.this] add:
+```
+template<class Future>
+  void std::this_thread::future_wait(Future& f) noexcept;
+```
+
+*Requires:* SemiFuture<Future>
+
+*Effects:* Blocks the calling thread until `f` becomes ready.
+
+*Synchronization:* The destruction of the continuation that generates `f`'s
+  value synchronizes-with the corresponding `future_wait` return.
+
+`std::this_thread::future_get`
+----------------------------------
+In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
+```
+template<class Future>
+  auto future_get(Future& f) -> Future::value_type;
+```
+
+To [thread.thread.this] add:
+```
+template<class Future>
+  auto std::this_thread::future_get(std::decay_t<Future>&& f)
+    -> std::decay_t<Future>::value_type;
+```
+*Requires:* SemiFuture<Future>
+
+*Effects:* Blocks the calling thread until `f` becomes ready.
+
+*Returns:*
+ * If `f` becomes ready with a value, moves the value from `f` and returns it
+   to the caller.
+ * If `f` becomes ready with an exception, rethrows the exception.
+
+*Synchronization:* The destruction of the continuation that generates `f`'s
+ value synchronizes-with the corresponding `future_get` return.
+
+*Throws:* If `f` becomes ready with an exception, that exception is rethrown.
+
 
 Proposed Changes to Executors
 =============================
@@ -397,7 +447,7 @@ control of launch:
  * then
 
 The first two could be considered *immediately launched*. That is that once
-handed to the executor,they may start immediately, assuming the internal
+handed to the executor, they may start immediately, assuming the internal
 executor policies and resources allow it. This makes them very useful for
 lazy-launch scenarios.
 
@@ -411,8 +461,8 @@ This means that work is enqueued only after all dependencies are satisfied.
 Then-executors, on the other hand, are intended for explicitly deferred work.
 Work can be handed to the executor dependent on prior work, before that prior
 work is completed.
-This design is fundamentally different, but offers scope for optimisation by
-the executor of chains of dependencies that is can batch, without running
+This design is fundamentally different, but offers scope for optimization by
+the executor of chains of dependencies that it can batch, without running
 additional code on completion of each.
 
 The current executor design is intentionally generic - it makes few requirements
@@ -420,7 +470,7 @@ on the future types it can use as input dependencies for the `then_execute` and
 `bulk_then_execute` operations.
 We can assume that for a future returned by a previous call to `then_execute`
 or `bulk_then_execute`, the executor understands the implementation of the
-future can can perform whatever depenence tracking and optimisation necessary.
+future can can perform whatever dependence tracking and optimization necessary.
 This then is an implementation detail.
 
 However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
