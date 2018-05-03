@@ -474,6 +474,8 @@ Descriptive Variable Definitions
       any exception thrown by either, in the associated shared state of the
       resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
       the associated shared state of the resulting `ContinuableFuture`.
+
+    **Postconditions:** Has no observable affect on `sfh`.
   </td>
 </tr>
 <tr>
@@ -489,6 +491,9 @@ Descriptive Variable Definitions
      * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
      Fails at compile-time otherwise.
+
+
+    **Postconditions:** Has no observable affect on `sfh`.     
   </td>
 </tr>
 </table>
@@ -585,15 +590,16 @@ public:
 bool standard_continuable_future<T, E>::valid() const noexcept;
 ```
 
-*Returns:* Returns true if this is a valid future. False otherwise.
+ * *Returns:* Returns true if this is a valid future. False otherwise.
 
 ```
 standard_shared_future<T, E> standard_continuable_future<T, E>::share() &&;
 ```
 
-*Returns:* standard_shared_future<R>(std::move(\*this)).
+ * *Returns:* standard_shared_future<R>(std::move(\*this)).
 
-*Postconditions:* valid() == false.
+ * *Postconditions:* valid() == false.
+
 
 `std::standard_shared_future`
 ----------------------------------
@@ -630,129 +636,132 @@ namespace std {
 }
 ```
 
+<br/>
 ```
 standard_shared_future(standard_shared_future&& rhs);
 ```
 
-*Effects:*
-  Move constructs a future object that refers to the shared state that
-  was originally referred to by rhs (if any).
-
-*Postconditions:*
- * valid() returns the same value as rhs.valid() prior to the constructor invocation.
- * rhs.valid() == false.
-
-
- ```
- standard_shared_future(const standard_shared_future& rhs);
- ```
-
- *Effects:*
-   Copy constructs a future object that refers to the shared state that
+ * *Effects:*  Move constructs a future object that refers to the shared state that
    was originally referred to by rhs (if any).
 
- *Postconditions:*
-  * valid() returns the same value as rhs.valid() prior to the constructor invocation.
+ * *Postconditions:*
+     * valid() returns the same value as rhs.valid() prior to the constructor invocation.
+     * rhs.valid() == false.
 
+<br/>
+```
+standard_shared_future(const standard_shared_future& rhs);
+```
+
+ * *Effects:* Copy constructs a future object that refers to the shared state that was originally referred to by rhs (if any).
+
+ * *Postconditions:* valid() returns the same value as rhs.valid() prior to the constructor invocation.
+
+<br/>
 ```
 standard_shared_future(standard_continuable_future&& rhs);
 ```
 
-*Effects:*
-  Move constructs a future object that refers to the shared state that
+ * *Effects:* Move constructs a future object that refers to the shared state that
   was originally referred to by rhs (if any).
 
-*Postconditions:*
- * valid() returns the same value as rhs.valid() prior to the constructor invocation.
- * rhs.valid() == false.
+ * *Postconditions:*
+    * valid() returns the same value as rhs.valid() prior to the constructor invocation.
+    * rhs.valid() == false.
 
+<br/>
 ```
 template<class ReturnFuture, class F>
 ReturnFuture then(F&&);
 ```
 
-*Requires:*
-  F satisfies the requirements of FutureContinuation.
+ * *Requires:*
+   F satisfies the requirements of FutureContinuation.
 
-*Returns:*
-  A `ContinuableFuture` that is bound to the executor `e` and
-  that wraps the type returned by execution of either the value or exception
-  operations implemented in the continuation. The type of the returned
-  `ContinuableFuture` is defined by `Executor` `E`.
+ * *Returns:* A `ContinuableFuture` that is bound to the executor `e` and
+   that wraps the type returned by execution of either the value or exception
+   operations implemented in the continuation. The type of the returned
+   `ContinuableFuture` is defined by `Executor` `E`.
 
-*Effects:*
-  For `NORMAL` defined as the expression `DECAY_COPY(std::forward<F>(g))(val)` if
-  `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void,
+ * *Effects:*
+     * For `NORMAL` defined as the expression `DECAY_COPY(std::forward<F>(g))(val)` if
+       `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void.
 
-  For `EXCEPTIONAL` defined as the expression
-  `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+     * For `EXCEPTIONAL` defined as the expression
+       `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
 
-  When `*this` becomes nonexceptionally ready, and if `NORMAL` is a
-  well-formed expression, creates an execution agent which invokes `NORMAL`
-  at most once, with the call to `DECAY_COPY` being evaluated in the thread
-  that called `then_execute`.
+     * When `*this` becomes nonexceptionally ready, and if `NORMAL` is a
+       well-formed expression, creates an execution agent which invokes `NORMAL`
+       at most once, with the call to `DECAY_COPY` being evaluated in the thread
+      that called `then_execute`.
 
-  Otherwise, when `*this` becomes exceptionally ready, if `EXCEPTIONAL` is a
-  well-formed expression, creates an execution agent which invokes
-  `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
-  in the thread that called `then_execute`.
+     * Otherwise, when `*this` becomes exceptionally ready, if `EXCEPTIONAL` is a
+       well-formed expression, creates an execution agent which invokes
+       `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
+       in the thread that called `then_execute`.
 
-  If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
-  `decltype(EXCEPTIONAL)` shall be convertible to `R`.
+     * If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
+       `decltype(EXCEPTIONAL)` shall be convertible to `R`.
 
-  If `NORMAL` is not a well-formed expression and `EXCEPTIONAL` is a
-  well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
-  `decltype(val)`.
+     * If `NORMAL` is not a well-formed expression and `EXCEPTIONAL` is a
+       well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
+       `decltype(val)`.
 
-  If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
-  invocation of `then_execute` shall be ill-formed.
+     * If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
+       invocation of `then_execute` shall be ill-formed.
 
-  May block pending completion of `NORMAL` or `EXCEPTIONAL`.
+     * May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-  The invocation of `then_execute` synchronizes with
-  (C++Std [intro.multithread]) the invocation of `f`.
+     * The invocation of `then_execute` synchronizes with
+       (C++Std [intro.multithread]) the invocation of `f`.
 
-  Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
-  any exception thrown by either, in the associated shared state of the
-  resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
-  the associated shared state of the resulting `ContinuableFuture`.
+     * Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
+       any exception thrown by either, in the associated shared state of the
+       resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
+       the associated shared state of the resulting `ContinuableFuture`.
+
+ * *Postconditions:* No observable change to \*this.
 
 
+<br/>
 ```
 standard_shared_future<T, EI> via(EI ex);
 ```
 
-*Effects:* Returns a new future that will complete when this completes but
+ * *Effects:* Returns a new future that will complete when this completes but
   on which continuations will be enqueued to a new executor.
-*Returns:* A standard_shared_future modified to carry executor ex of type EI.
-*Requires:*
- * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
- * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
+ * *Returns:* A standard_shared_future modified to carry executor ex of type EI.
+
+ * *Requires:*
+   * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+   * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+
+ * *Postconditions:* No observable change to \*this.
+
+ <br/>
 ```
 E get_executor() const;
 ```
-
-*Returns:* If is_valid() returns true returns the executor contained within the
+ * *Returns:* If is_valid() returns true returns the executor contained within the
 future. Otherwise throws std::future_error.
 
-
+<br/>
 ```
 standard_semi_future<T> semi();
 ```
-
-*Returns:*
+ * *Returns:*
   Returns a standard_semi_future of the same value type as \*this and that
   completes when this completes, but that erases the executor. is_valid() on the
   returned standard_semi_future will return the same value as is_valid() on
   \*this.
 
-
+<br/>
 ```
 bool valid() const noexcept;
 ```
+ * *Returns:* Returns true if this is a valid future. False otherwise.
 
-*Returns:* Returns true if this is a valid future. False otherwise.
 
 `std::this_thread::future_wait`
 ----------------------------------
@@ -762,19 +771,21 @@ template<class Future>
   void future_wait(Future& f) noexcept;
 ```
 
+<br/>
 To [thread.thread.this] add:
 ```
 template<class Future>
   void std::this_thread::future_wait(Future& f) noexcept;
 ```
 
-*Requires:* SemiFuture<Future>
+ * *Requires:* SemiFuture<Future>
 
-*Effects:* Blocks the calling thread until `f` becomes ready.
+ * *Effects:* Blocks the calling thread until `f` becomes ready.
 
-*Synchronization:* The destruction of the continuation that generates `f`'s
-  value synchronizes-with the corresponding `future_wait` return.
+ * *Synchronization:* The destruction of the continuation that generates `f`'s
+   value synchronizes-with the corresponding `future_wait` return.
 
+<br/>
 `std::this_thread::future_get`
 ----------------------------------
 In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
@@ -783,25 +794,26 @@ template<class Future>
   auto future_get(Future& f) -> Future::value_type;
 ```
 
+<br/>
 To [thread.thread.this] add:
 ```
 template<class Future>
   auto std::this_thread::future_get(std::decay_t<Future>&& f)
     -> std::decay_t<Future>::value_type;
 ```
-*Requires:* SemiFuture<Future>
+ * *Requires:* SemiFuture<Future>
 
-*Effects:* Blocks the calling thread until `f` becomes ready.
+ * *Effects:* Blocks the calling thread until `f` becomes ready.
 
-*Returns:*
- * If `f` becomes ready with a value, moves the value from `f` and returns it
-   to the caller.
- * If `f` becomes ready with an exception, rethrows the exception.
+ * *Returns:*
+     * If `f` becomes ready with a value, moves the value from `f` and returns it
+       to the caller.
+     * If `f` becomes ready with an exception, rethrows the exception.
 
-*Synchronization:* The destruction of the continuation that generates `f`'s
- value synchronizes-with the corresponding `future_get` return.
+ * *Synchronization:* The destruction of the continuation that generates `f`'s
+   value synchronizes-with the corresponding `future_get` return.
 
-*Throws:* If `f` becomes ready with an exception, that exception is rethrown.
+ * *Throws:* If `f` becomes ready with an exception, that exception is rethrown.
 
 Proposed Changes to Executors
 =============================
