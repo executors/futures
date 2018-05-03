@@ -105,14 +105,14 @@ Implements at least one of:
   </td>
 </tr>
 <tr>
-  <td>`ft(exception_tag_t, e)`</td>
+  <td>`ft(exception_arg, e)`</td>
   <td>R</td>
   <td>
     Execute associated code inline with the caller.
 
     May throw.
 
-    If both `ft(v)` and `ft(exception_tag_t, e)` are provided on the same `FutureContinuation` then return type `R` should be the same for all overloads of the two operations.
+    If both `ft(v)` and `ft(exception_arg, e)` are provided on the same `FutureContinuation` then return type `R` should be the same for all overloads of the two operations.
   </td>
 </tr>
 </table>
