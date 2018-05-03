@@ -317,12 +317,12 @@ Descriptive Variable Definitions
       When `rcf` becomes nonexceptionally ready, and if `NORMAL` is a
       well-formed expression, creates an execution agent which invokes `NORMAL`
       at most once, with the call to `DECAY_COPY` being evaluated in the thread
-      that called `then_execute`.
+      that called `.then`.
 
       Otherwise, when `rcf` becomes exceptionally ready, if `EXCEPTIONAL` is a
       well-formed expression, creates an execution agent which invokes
       `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
-      in the thread that called `then_execute`.
+      in the thread that called `.then`.
 
       If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
       `decltype(EXCEPTIONAL)` shall be convertible to `R`.
@@ -332,11 +332,11 @@ Descriptive Variable Definitions
       `decltype(val)`.
 
       If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
-      invocation of `then_execute` shall be ill-formed.
+      invocation of `.then` shall be ill-formed.
 
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-      The invocation of `then_execute` synchronizes with
+      The invocation of `.then` synchronizes with
       (C++Std [intro.multithread]) the invocation of `f`.
 
       Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
@@ -448,12 +448,12 @@ Descriptive Variable Definitions
       When `shf` becomes nonexceptionally ready, and if `NORMAL` is a
       well-formed expression, creates an execution agent which invokes `NORMAL`
       at most once, with the call to `DECAY_COPY` being evaluated in the thread
-      that called `then_execute`.
+      that called `.then`.
 
       Otherwise, when `shf` becomes exceptionally ready, if `EXCEPTIONAL` is a
       well-formed expression, creates an execution agent which invokes
       `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
-      in the thread that called `then_execute`.
+      in the thread that called `.then`.
 
       If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
       `decltype(EXCEPTIONAL)` shall be convertible to `R`.
@@ -463,11 +463,11 @@ Descriptive Variable Definitions
       `decltype(val)`.
 
       If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
-      invocation of `then_execute` shall be ill-formed.
+      invocation of `.then` shall be ill-formed.
 
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-      The invocation of `then_execute` synchronizes with
+      The invocation of `.then` synchronizes with
       (C++Std [intro.multithread]) the invocation of `f`.
 
       Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
@@ -493,7 +493,7 @@ Descriptive Variable Definitions
      Fails at compile-time otherwise.
 
 
-    **Postconditions:** Has no observable affect on `sfh`.     
+    **Postconditions:** Has no observable affect on `sfh`.
   </td>
 </tr>
 </table>
@@ -655,7 +655,7 @@ standard_shared_future(const standard_shared_future& rhs);
 
  * *Effects:* Copy constructs a future object that refers to the shared state that was originally referred to by rhs (if any).
 
- * *Postconditions:* valid() returns the same value as rhs.valid() prior to the constructor invocation.
+ * *Postconditions:* valid() returns the same value as rhs.valid() prior to the constructor invocation. The validity of rhs does not change.
 
 <br/>
 ```
@@ -693,12 +693,12 @@ ReturnFuture then(F&&);
      * When `*this` becomes nonexceptionally ready, and if `NORMAL` is a
        well-formed expression, creates an execution agent which invokes `NORMAL`
        at most once, with the call to `DECAY_COPY` being evaluated in the thread
-      that called `then_execute`.
+      that called `.then`.
 
      * Otherwise, when `*this` becomes exceptionally ready, if `EXCEPTIONAL` is a
        well-formed expression, creates an execution agent which invokes
        `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
-       in the thread that called `then_execute`.
+       in the thread that called `.then`.
 
      * If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
        `decltype(EXCEPTIONAL)` shall be convertible to `R`.
@@ -708,11 +708,11 @@ ReturnFuture then(F&&);
        `decltype(val)`.
 
      * If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
-       invocation of `then_execute` shall be ill-formed.
+       invocation of `.then` shall be ill-formed.
 
      * May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-     * The invocation of `then_execute` synchronizes with
+     * The invocation of `.then` synchronizes with
        (C++Std [intro.multithread]) the invocation of `f`.
 
      * Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
