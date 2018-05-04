@@ -41,11 +41,13 @@ Futures
 
 7.  A <dfn data-lt="ready|ready future">ready future</dfn> is a future whose content is available.
 
-8.  A [=ready future=] may be <dfn data-lt="made consumed|make consumed">made consumed</dfn>, an operation that atomically invalidates the [=future's content=] and changes [=future's status|its status=] to [=consumed=].
+8.  A <dfn data-lt="valid|valid future">valid future</dfn> is a future whose [=future content|content=] is available or may become available.
 
-9.  A <dfn data-lt="consumed|consumed future">consumed future</dfn> is a future whose [=future content|content=] was available previously and is now unavailable.
+9.  A [=ready future=] may be <dfn data-lt="made invalid|make invalid">made invalid</dfn>, an operation that atomically invalidates the [=future's content=] and changes [=future's status|its status=] to [=invalid=].
 
-10. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=consumed future=].
+10.  A <dfn data-lt="invalid|invalid future">invalid future</dfn> is a future whose [=future content|content=] was available previously and is now unavailable, or for which [=future content|content=] can never become available.
+
+11. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=invalid future=].
 
 `FutureContinuation` Requirements
 ----------------------------
@@ -85,6 +87,13 @@ Descriptive Variable Definitions
   <td>`e`</td>
   <td>A value of type `std::exception_ptr`, or `std::exception_ptr&&`.</td>
 </tr>
+<tr>
+  <td>`exception_arg`</td>
+  <td>
+    A tag type used to distinguish between the exceptional and non-exceptional
+    overloads of `operator()` on `fc`.
+  </td>
+</tr>
 </table>
 
 `FutureContinuation` Requirements
@@ -98,21 +107,21 @@ Implements at least one of:
   <th>Operational Semantics</th>
 </tr>
 <tr>
-  <td>`ft(v)`</td>
+  <td>`fc(v)`</td>
   <td>R</td>
   <td>
     Execute associated code inline with the caller. May throw.
   </td>
 </tr>
 <tr>
-  <td>`ft(exception_arg, e)`</td>
+  <td>`fc(exception_arg, e)`</td>
   <td>R</td>
   <td>
     Execute associated code inline with the caller.
 
     May throw.
 
-    If both `ft(v)` and `ft(exception_arg, e)` are provided on the same
+    If both `fc(v)` and `fc(exception_arg, e)` are provided on the same
     `FutureContinuation` then return type `R` should be the same for all
     overloads of the two operations.
   </td>
@@ -262,6 +271,13 @@ Descriptive Variable Definitions
 <tr>
  <td>`ex`</td>
  <td>The exception contained within the exceptionally completed future RCF.
+</tr>
+<tr>
+  <td>`exception_arg`</td>
+  <td>
+    A tag type used to distinguish between the exceptional and non-exceptional
+    overloads of `operator()` on `fc`.
+  </td>
 </tr>
 <tr>
   <td>`NORMAL`</td>
