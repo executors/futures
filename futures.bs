@@ -1,5 +1,5 @@
 <pre class='metadata'>
-Title: A Unified Futures Proposal
+Title: A Unified Futures Proposal for C++
 Abstract: Proposed future concepts that compose with executors.
 Shortname: P1054
 URL: wg21.link/P1054
@@ -12,9 +12,25 @@ No Abstract: yes
 Markup Shorthands: markdown yes
 Markup Shorthands: biblio yes
 Editor: Lee Howes, Facebook, lwh@fb.com
-Editor: Bryce Adelstein Lelbach, brycelelbach@gmail.com
+Editor: Bryce Adelstein Lelbach, NVIDIA, brycelelbach@gmail.com
 Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
 </pre>
+
+<!-- Keep this alphabetical by last name -->
+
+Contributors:
+
+* Michał  Dominiak
+* Carter  Edwards
+* Jay     Feldblum
+* Andrii  Grynenko
+* Jared   Hoberock
+* Hartmut Kaiser
+* Chris   Kohlhoff
+* Chris   Mysen
+* Sean    Parent
+* Felix   Petriconi 
+* Mathias Stearn
 
 Introduction {#intro}
 =====================
@@ -50,7 +66,7 @@ Futures
 11. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=invalid future=].
 
 `FutureContinuation` Requirements
-----------------------------
+---------------------------------
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
