@@ -1002,6 +1002,79 @@ Drop this entire section and replace with the `Future` requirements from this
 paper.
 
 
+TwoWayExecutor requirements
+--------------------
+In the *Return Type* column.
+
+**Replace:**
+A type that satisfies the Future requirements for the value type R.
+
+**With:**
+A type that satisfies the ContinuableFutureFuture requirements for the value
+type R and for which `returnvalue.get_executor()` returns x.
+
+
+ThenExecutor requirements
+--------------------
+In the type requirements list.
+
+**Replace:**
+ * fut denotes a future object satisfying the Future requirements,
+
+**With:**
+ * fut denotes a future object that:
+     * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
+       `x.then_execute`, or `x.bulk_then_execute` and meets the
+       `ContinuableFuture` requirements.
+     * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
+       `execution::query(x, cancellable_promise_contract_t<T>)`
+
+In the *Return Type* column.
+
+**Replace:**
+A type that satisfies the Future requirements for the value type R.
+
+**With:**
+A type that satisfies the ContinuableFutureFuture requirements for the value
+type R and for which `returnvalue.get_executor()` returns x.
+
+
+BulkTwoWayExecutor requirements
+--------------------
+In the *Return Type* column.
+
+**Replace:**
+A type that satisfies the Future requirements for the value type R.
+
+**With:**
+A type that satisfies the ContinuableFutureFuture requirements for the value
+type R and for which `returnvalue.get_executor()` returns x.
+
+
+BulkThenExecutor requirements
+--------------------
+In the type requirements list.
+
+**Replace:**
+ * fut denotes a future object satisfying the Future requirements,
+
+**With:**
+ * fut denotes a future object that:
+     * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
+       `x.then_execute`, or `x.bulk_then_execute` and meets the
+       `ContinuableFuture` requirements.
+     * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
+       `execution::query(x, cancellable_promise_contract_t<T>)`.
+
+In the *Return Type* column.
+
+**Replace:**
+A type that satisfies the Future requirements for the value type R.
+
+**With:**
+A type that satisfies the ContinuableFutureFuture requirements for the value
+type R and for which `returnvalue.get_executor()` returns x.
+
 twoway_t customization points
 --------------------
 **Replace:**
@@ -1181,5 +1254,5 @@ static_thread_pool executor types
       void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const
 ```
 
-Replace the same instances in the documentation section below the main code 
+Replace the same instances in the documentation section below the main code
 block.
