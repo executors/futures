@@ -1141,3 +1141,45 @@ shared and makes that shared state ready. --end note]
 The returned future is made ready when `f1()` completes execution, with either
 the result in `r1` (if `decltype(rf1())` is non-void) or any exception thrown by
 an invocation `f1`.
+
+
+static_thread_pool executor types
+--------------------
+**Replace:**
+```
+    template<class Function>
+      std::experimental::future<result_of_t<decay_t<Function>()>>
+        twoway_execute(Function&& f) const
+
+    template<class Function, class Future>
+      std::experimental::future<result_of_t<decay_t<Function>(decay_t<Future>)>>
+        then_execute(Function&& f, Future&& pred) const;
+
+    template<class Function, class SharedFactory>
+      void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
+
+    template<class Function, class ResultFactory, class SharedFactory>
+      std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
+        void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
+
+**With:**
+```
+  template<class Function>
+    std::standard_continuable_future<result_of_t<decay_t<Function>()>, C>
+      twoway_execute(Function&& f) const
+
+  template<class Function, class Future>
+    std::standard_continuable_future<result_of_t<decay_t<Function>(decay_t<Future>)>, C>
+      then_execute(Function&& f, Future&& pred) const;
+
+  template<class Function, class SharedFactory>
+    void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
+
+  template<class Function, class ResultFactory, class SharedFactory>
+    std::standard_continuable_future<result_of_t<decay_t<ResultFactory>()>>, C>
+      void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const
+```
+
+Replace the same instances in the documentation section below the main code 
+block.
