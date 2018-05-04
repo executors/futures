@@ -1,5 +1,5 @@
 <pre class='metadata'>
-Title: Back to the Future Part III
+Title: A Unified Futures Proposal
 Abstract: Proposed future concepts that compose with executors.
 Shortname: P1054
 URL: wg21.link/P1054
