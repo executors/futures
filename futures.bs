@@ -560,11 +560,11 @@ standard_future<T, promise_default_executor> get_continuable_future();
 ```
 
 * *Effects:* Obtained a `standard_continuable_future` that completes on the
-  promise's default executor when `this->set_value(v)` or
-  `this->set_exception(e)` is called.
+    promise's default executor when `this->set_value(v)` or
+    `this->set_exception(e)` is called.
 
 * *Postconditions:* Further calls to `get_continuable_future()` or
-  to `get_semi_future()` will throw.
+    to `get_semi_future()` will throw.
 
 <br/>
 ```
@@ -627,11 +627,11 @@ standard_continuable_future(standard_semi_future&& rhs);
 ```
 
  * *Effects:*  Move constructs a future object that refers to the shared state
-   that was originally referred to by rhs (if any).
+    that was originally referred to by rhs (if any).
 
  * *Postconditions:*
      * valid() returns the same value as rhs.valid() prior to the constructor
-       invocation.
+        invocation.
      * rhs.valid() == false.
 
 <br/>
@@ -640,10 +640,10 @@ standard_semi_future(const standard_semi_future& rhs);
 ```
 
  * *Effects:* Copy constructs a future object that refers to the shared state
-   that was originally referred to by rhs (if any).
+    that was originally referred to by rhs (if any).
 
  * *Postconditions:* valid() returns the same value as rhs.valid() prior to the
-   constructor invocation. The validity of rhs does not change.
+    constructor invocation. The validity of rhs does not change.
 
 <br/>
 ```
@@ -652,7 +652,7 @@ standard_semi_future(standard_continuable_future<T, E>&& rhs);
 ```
 
 * *Effects:* Move constructs a future object that refers to the shared state that
- was originally referred to by rhs (if any).
+    was originally referred to by rhs (if any).
 
 * *Postconditions:*
    * valid() returns the same value as rhs.valid() prior to the constructor invocation.
@@ -669,11 +669,11 @@ explicit standard_semi_future(const standard_shared_future<T, E>& rhs);
 ```
 
  * *Effects:* Move constructs a future object that refers to the shared state
-   that was originally referred to by rhs (if any).
+    that was originally referred to by rhs (if any).
 
  * *Postconditions:*
     * valid() returns the same value as rhs.valid() prior to the constructor
-      invocation.
+        invocation.
     * rhs.valid() == false.
 
 <br/>
@@ -682,10 +682,10 @@ standard_continuable_future<T, EI> via(EI ex) &&;
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
-  on which continuations will be enqueued to a new executor.
+    on which continuations will be enqueued to a new executor.
 
  * *Returns:* A standard_continuable_future modified to carry executor ex of
-   type EI.
+    type EI.
 
  * *Requires:*
    * `e` is a `ThenExecutor` where
@@ -702,8 +702,6 @@ bool valid() const noexcept;
 ```
 
  * *Returns:* Returns true if this is a valid future. False otherwise.
-
-
 
 `std::standard_continuable_future`
 ----------------------------------
@@ -756,11 +754,11 @@ standard_continuable_future(standard_continuable_future&& rhs);
 ```
 
  * *Effects:*  Move constructs a future object that refers to the shared state
-   that was originally referred to by rhs (if any).
+    that was originally referred to by rhs (if any).
 
  * *Postconditions:*
      * valid() returns the same value as rhs.valid() prior to the constructor
-       invocation.
+        invocation.
      * rhs.valid() == false.
 
 <br/>
@@ -769,10 +767,10 @@ standard_continuable_future(const standard_continuable_future& rhs);
 ```
 
  * *Effects:* Copy constructs a future object that refers to the shared state
-   that was originally referred to by rhs (if any).
+    that was originally referred to by rhs (if any).
 
  * *Postconditions:* valid() returns the same value as rhs.valid() prior to the
-   constructor invocation. The validity of rhs does not change.
+    constructor invocation. The validity of rhs does not change.
 
 <br/>
 ```
@@ -784,11 +782,11 @@ explicit standard_continuable_future(const standard_shared_future<T, E>& rhs);
 ```
 
  * *Effects:* Move constructs a future object that refers to the shared state that
-  was originally referred to by rhs (if any).
+    was originally referred to by rhs (if any).
 
  * *Postconditions:*
     * valid() returns the same value as rhs.valid() prior to the constructor
-      invocation.
+        invocation.
     * rhs.valid() == false.
 
 <br/>
@@ -798,49 +796,49 @@ ReturnFuture then(F&&) &&;
 ```
 
  * *Requires:*
-   F satisfies the requirements of FutureContinuation.
+    F satisfies the requirements of FutureContinuation.
 
  * *Returns:* A `ContinuableFuture` that is bound to the executor `e` and
-   that wraps the type returned by execution of either the value or exception
-   operations implemented in the continuation. The type of the returned
-   `ContinuableFuture` is defined by `Executor` `E`.
+    that wraps the type returned by execution of either the value or exception
+    operations implemented in the continuation. The type of the returned
+    `ContinuableFuture` is defined by `Executor` `E`.
 
  * *Effects:*
      * For `NORMAL` defined as the expression `DECAY_COPY(std::forward<F>(g))(val)` if
-       `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void.
+        `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void.
 
      * For `EXCEPTIONAL` defined as the expression
-       `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+        `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
 
      * When `*this` becomes nonexceptionally ready, and if `NORMAL` is a
-       well-formed expression, creates an execution agent which invokes `NORMAL`
-       at most once, with the call to `DECAY_COPY` being evaluated in the thread
-      that called `.then`.
+        well-formed expression, creates an execution agent which invokes `NORMAL`
+        at most once, with the call to `DECAY_COPY` being evaluated in the thread
+        that called `.then`.
 
      * Otherwise, when `*this` becomes exceptionally ready, if `EXCEPTIONAL` is a
-       well-formed expression, creates an execution agent which invokes
-       `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
-       in the thread that called `.then`.
+        well-formed expression, creates an execution agent which invokes
+        `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
+        in the thread that called `.then`.
 
      * If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
-       `decltype(EXCEPTIONAL)` shall be convertible to `R`.
+        `decltype(EXCEPTIONAL)` shall be convertible to `R`.
 
      * If `NORMAL` is not a well-formed expression and `EXCEPTIONAL` is a
-       well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
-       `decltype(val)`.
+        well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
+        `decltype(val)`.
 
      * If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
-       invocation of `.then` shall be ill-formed.
+        invocation of `.then` shall be ill-formed.
 
      * May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
      * The invocation of `.then` synchronizes with
-       (C++Std [intro.multithread]) the invocation of `f`.
+        (C++Std [intro.multithread]) the invocation of `f`.
 
      * Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
-       any exception thrown by either, in the associated shared state of the
-       resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
-       the associated shared state of the resulting `ContinuableFuture`.
+        any exception thrown by either, in the associated shared state of the
+        resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
+        the associated shared state of the resulting `ContinuableFuture`.
 
  * *Postconditions:* valid() == false.
 
@@ -850,16 +848,16 @@ standard_continuable_future<T, EI> via(EI ex) &&;
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
-  on which continuations will be enqueued to a new executor.
+    on which continuations will be enqueued to a new executor.
 
  * *Returns:* A standard_continuable_future modified to carry executor ex of
-   type EI.
+    type EI.
 
  * *Requires:*
    * `e` is a `ThenExecutor` where
-     `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or
-     `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)`
-     is valid.
+      `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or
+      `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)`
+      is valid.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
   * *Postconditions:* valid() == false.
@@ -869,17 +867,17 @@ standard_continuable_future<T, EI> via(EI ex) &&;
 E get_executor() const;
 ```
  * *Returns:* If is_valid() returns true returns the executor contained within the
-   future. Otherwise throws std::future_error.
+    future. Otherwise throws std::future_error.
 
 <br/>
 ```
 standard_semi_future<T> semi() &&;
 ```
  * *Returns:*
-   Returns a standard_semi_future of the same value type as \*this and that
-   completes when this completes, but that erases the executor. is_valid() on the
-   returned standard_semi_future will return the same value as is_valid() on
-   \*this.
+    Returns a standard_semi_future of the same value type as \*this and that
+    completes when this completes, but that erases the executor. is_valid() on the
+    returned standard_semi_future will return the same value as is_valid() on
+    \*this.
 
 <br/>
 ```
@@ -943,7 +941,7 @@ standard_shared_future(standard_shared_future&& rhs);
 ```
 
  * *Effects:*  Move constructs a future object that refers to the shared state that
-    was originally referred to by rhs (if any).
+      was originally referred to by rhs (if any).
 
  * *Postconditions:*
      * valid() returns the same value as rhs.valid() prior to the constructor invocation.
@@ -964,7 +962,7 @@ explicit standard_shared_future(standard_continuable_future&& rhs);
 ```
 
  * *Effects:* Move constructs a future object that refers to the shared state that
-    was originally referred to by rhs (if any).
+      was originally referred to by rhs (if any).
 
  * *Postconditions:*
     * valid() returns the same value as rhs.valid() prior to the constructor invocation.
@@ -976,13 +974,12 @@ template<class ReturnFuture, class F>
 ReturnFuture then(F&&);
 ```
 
- * *Requires:*
-    F satisfies the requirements of FutureContinuation.
+ * *Requires:* F satisfies the requirements of FutureContinuation.
 
  * *Returns:* A `ContinuableFuture` that is bound to the executor `e` and
-    that wraps the type returned by execution of either the value or exception
-    operations implemented in the continuation. The type of the returned
-    `ContinuableFuture` is defined by `Executor` `E`.
+      that wraps the type returned by execution of either the value or exception
+      operations implemented in the continuation. The type of the returned
+      `ContinuableFuture` is defined by `Executor` `E`.
 
  * *Effects:*
      * For `NORMAL` defined as the expression `DECAY_COPY(std::forward<F>(g))(val)` if
@@ -1030,7 +1027,7 @@ standard_shared_future<T, EI> via(EI ex);
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
-    on which continuations will be enqueued to a new executor.
+      on which continuations will be enqueued to a new executor.
 
  * *Returns:* A standard_shared_future modified to carry executor ex of type EI.
 
@@ -1052,10 +1049,10 @@ E get_executor() const;
 standard_semi_future<T> semi();
 ```
  * *Returns:*
-    Returns a standard_semi_future of the same value type as \*this and that
-    completes when this completes, but that erases the executor. is_valid() on the
-    returned standard_semi_future will return the same value as is_valid() on
-    \*this.
+      Returns a standard_semi_future of the same value type as \*this and that
+      completes when this completes, but that erases the executor. is_valid() on the
+      returned standard_semi_future will return the same value as is_valid() on
+      \*this.
 
 <br/>
 ```
@@ -1112,7 +1109,7 @@ template<class Future>
      * If `f` becomes ready with an exception, rethrows the exception.
 
  * *Synchronization:* The destruction of the continuation that generates `f`'s
-    value synchronizes-with the corresponding `future_get` return.
+      value synchronizes-with the corresponding `future_get` return.
 
  * *Throws:* If `f` becomes ready with an exception, that exception is rethrown.
 
