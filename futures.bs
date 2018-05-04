@@ -917,8 +917,7 @@ struct promise_contract_t
 };
 ```
 
-The `promise_contract_t` property can be used only with query, which returns the
-execution context associated with the executor.
+The `promise_contract_t` property can be used only with query.
 
 The result of a query of the `promise_contract_t` property applied to a
 `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a `Promise`
@@ -959,8 +958,7 @@ struct cancellable_promise_contract_t
 };
 ```
 
-The `cancellable_promise_contract_t` property can be used only with query,
-which returns the execution context associated with the executor.
+The `cancellable_promise_contract_t` property can be used only with query.
 `cancellable_promise_contract_t` differs from `promise_contract_t` in that the
 query carries a cancellation callback, `cancellation_callback`, that will be
 called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
