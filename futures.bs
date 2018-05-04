@@ -1177,8 +1177,9 @@ ready. --end note]
 **With:**
 
 *Returns:* A value whose type satisfies the `ContinuableFuture` requirements.
-The returned future is made ready when `f1()` completes execution, with either
-the result of f1() or any exception thrown by f1().
+The returned future is made ready when `f1()` completes execution, with the
+result of `f1()` if `decltype(f1())` is non-void, void completion if
+`decltype(f1())` is void or any exception thrown by `f1()`.
 
 
 **Replace:**
@@ -1211,9 +1212,9 @@ shared and makes that shared state ready. --end note]
 **With:**
 
 *Returns:* A value whose type satisfies the `ContinuableFuture` requirements.
-The returned future is made ready when `f1()` completes execution, with either
-the result in `r1` (if `decltype(rf1())` is non-void) or any exception thrown by
-an invocation `f1`.
+The returned future is made ready when `f1()` completes execution, with
+the result in `r1` (if `decltype(rf1())` is non-void), valueless completion
+(if `decltype(rf1())` is void) or any exception thrown by an invocation `f1`.
 
 
 static_thread_pool executor types
