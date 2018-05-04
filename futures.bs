@@ -70,77 +70,67 @@ Futures
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
-1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> associated with a future.
+```
+namespace std {
 
-2.  A `FutureContinuation` type shall meet the `MoveConstructible` requirements and meet the requirements described in the Tables below.
+struct exception_arg_t { explicit exception_arg_t() = default; };
+
+inline constexpr exception_arg_t exception_arg{};
+
+template <typename F, typename T>
+  struct is_future_value_continuation;
+
+template <typename F, typename T>
+  inline constexpr bool is_future_value_continuation_v = is_future_value_continuation<F, T>::value;
+
+template <typename F, typename T>
+  struct is_future_exception_continuation;
+
+template <typename F, typename T>
+  inline constexpr bool is_future_exception_continuation_v = is_future_exception_continuation<F, T>::value;
+
+}
+```
+
+1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> that consumes the value of a [=future=].
+
+<!-- Based on [optional.nullopt] p1 -->
+2. The struct `exception_arg_t` is an empty structure type used as a unique type to disambiguate `FutureContinuation` overloads that are called when a [=future=]'s [=shared state=] holds an exception from `FutureContinuation` overloads that are called when a [=future=]'s [=shared state=] holds a value.
+
+<!-- Based on [meta.rel] -->
+3.  This sub-clause contains templates that may be used to determine at compile time whether a type meets the requirements of [=future continuations=] for a particular [=future=] value type. Each of these templates is a <a href="http://eel.is/c++draft/meta.rqmts#def:BinaryTypeTraith">`BinaryTypeTrait`</a> with a base characteristic of `true_type` if the corresponding condition is true and `false` otherwise.
+
+4.  A `FutureContinuation` type shall meet the `MoveConstructible` requirements and the requirements described in the Tables below.
 
 <center>
 
-Descriptive Variable Definitions
+**Type Property Queries**
 
 <table border=1>
 <tr>
-  <th>Variable</th>
-  <th>Definition</th>
+  <th>Template</th>
+  <th>Condition</th>
+  <th>Preconditions</th>
 </tr>
 <tr>
-  <td>`T`</td>
-  <td>Any (possibly cv-qualified) object type that is not an array.</td>
-</tr>
-<tr>
-  <td>`FC<T>`</td>
-  <td>A `FutureContinuation` type for type `T`.</td>
-</tr>
-<tr>
-  <td>`fc`</td>
-  <td>A value of type `FC<T>`.</td>
-</tr>
-<tr>
-  <td>`v`</td>
-  <td>A value of type `T`, `T&`, `const T&`, or `T&&`.</td>
-</tr>
-<tr>
-  <td>`e`</td>
-  <td>A value of type `std::exception_ptr`, or `std::exception_ptr&&`.</td>
-</tr>
-<tr>
-  <td>`exception_arg`</td>
   <td>
-    A tag type used to distinguish between the exceptional and non-exceptional
-    overloads of `operator()` on `fc`.
+```
+template <typename F, typename T>
+struct is_future_value_continuation;
+```
   </td>
-</tr>
-</table>
-
-`FutureContinuation` Requirements
-
-Implements at least one of:
-
-<table border=1>
-<tr>
-  <th>Expression</th>
-  <th>Return Type</th>
-  <th>Operational Semantics</th>
+  <td>`is_move_constructible_v<F> && is_invocable_v<F, T>`</td>
+  <td>`T` is a complete type.</td>
 </tr>
 <tr>
-  <td>`fc(v)`</td>
-  <td>R</td>
   <td>
-    Execute associated code inline with the caller. May throw.
+```
+template <typename F, typename T>
+struct is_future_exception_continuation;
+```
   </td>
-</tr>
-<tr>
-  <td>`fc(exception_arg, e)`</td>
-  <td>R</td>
-  <td>
-    Execute associated code inline with the caller.
-
-    May throw.
-
-    If both `fc(v)` and `fc(exception_arg, e)` are provided on the same
-    `FutureContinuation` then return type `R` should be the same for all
-    overloads of the two operations.
-  </td>
+  <td>`is_future_value_continuation_v<F, T> && is_invocable_v<F, T>`</td>
+  <td>`T` is a complete type.</td>
 </tr>
 </table>
 
