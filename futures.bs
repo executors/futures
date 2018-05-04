@@ -144,7 +144,7 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
-  <td>`SF`</td>
+  <td>`SF<T>`</td>
   <td>A `SemiFuture` type for type `T`.</td>
 </tr>
 <tr>
