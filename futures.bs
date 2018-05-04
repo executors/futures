@@ -45,30 +45,79 @@ TODO
 Proposed New Wording
 ====================
 
-Futures
--------
+Future/Promise Model
+---------------------
 
-1.  A <dfn>future</dfn> is an object that represents a value that may not available yet.
+<!-- Based on [futures.state] p1 -->
+1.  A <dfn>shared state</dfn> is an object that consists of three components: (possibly not yet produced) content, status, and, optionally, a cancellation notifier.
 
-2.  A [=future=] consists of two components: content and status.
+<!-- Based on [futures.state] p1 -->
+2.  A <dfn data-lt="shared state's content|shared state content|content">shared state's content</dfn> is either a value or an exception.
 
-3.  A <dfn data-lt="future's content|future content">future's content</dfn> is either a value or error.
+3.  A <dfn data-lt="shared state's status|shared state status|status">shared state's status</dfn> is either [=ready=], <dfn data-lt="shared state not ready|not ready">not ready</dfn>, or <dfn data-lt="shared state consumed|consumed">consumed</dfn>.
 
-4.  A <dfn data-lt="future's status|future status">future's status</dfn> is either [=not ready=], [=ready=] or [=consumed=].
+<!-- Based on [future.state] p8 -->
+4.  A [=shared state=] shall be <dfn data-lt="shared state ready|ready">ready</dfn> if and only if it holds a value or an exception ready for retrieval.
 
-5.  A <dfn data-lt="not ready|not ready future">not ready future</dfn> is a future whose content is not available yet.
+5.  If it exists, a <dfn data-lt="shared state's cancellation notifier|shared state cancellation notifier|cancellation notifier">shared state's cancellation notifier</dfn> is a nullary <a href="eel.is/c++draft/func.def">callable object</a>. 
 
-6.  A not ready future may be <dfn data-lt="made ready|make ready">made ready</dfn>, an operation that atomically sets the [=future's content=] and changes [=future's status|its status=] to [=ready=].
+<!-- Based on [futures.state] p3 -->
+6.  A <dfn>future</dfn> is an object that consumes or reads the content and status of a [=shared state=].
 
-7.  A <dfn data-lt="ready|ready future">ready future</dfn> is a future whose content is available.
+<!-- Based on [futures.state] p4 -->
+7.  A <dfn>promise</dfn> is an object that produces the content and status of a [=shared state=].
 
-8.  A <dfn data-lt="valid|valid future">valid future</dfn> is a future whose [=future content|content=] is available or may become available.
+<!-- Based on [futures.state] p5 -->
+8.  When a [=future=] or [=promise=] <dfn data-lt="shared state release|release|releases">releases</dfn> its [=shared state=]:
 
-9.  A [=ready future=] may be <dfn data-lt="made invalid|make invalid">made invalid</dfn>, an operation that atomically invalidates the [=future's content=] and changes [=future's status|its status=] to [=invalid=].
+  * If the [=future=] or [=promise=] holds the last reference to its [=shared state=], the shared state is destroyed; and
+  * The [=future=] or [=promise=] gives up its reference to its [=shared state=]; and
+  * These actions shall not block for the [=shared state=] to become [=ready=].
 
-10.  A <dfn data-lt="invalid|invalid future">invalid future</dfn> is a future whose [=future content|content=] was available previously and is now unavailable, or for which [=future content|content=] can never become available.
+<!-- Based on [futures.state] p5 and p6-->
+9.  When a [=future=] <dfn data-lt="shared state cancellation|cancel|cancels|cancelling">cancels</dfn> its [=shared state=]:
 
-11. A program has undefined behavior if it accesses the [=future content|content=] of a [=not ready=] or [=invalid future=].
+  * First, the [=future=] invokes the [=shared state=]'s [=cancellation notifier=].
+  * Finally, the [=future=] [=releases=] its [=shared state=].
+
+<!-- Based on [futures.state] p5 and p6-->
+10. When a [=future=] attempts to <dfn data-lt="shared state consumption|consumption|consume|consumes|consuming">consume</dfn> its [=shared state content=]:
+
+  * First, the [=future=] checks the [=shared state's status=].
+  * Then, if the [=shared state's status=] is [=ready=]:
+    * The [=future=] moves from the content.
+    * Then, the [=future=] sets the [=shared state's status=] to [=consumed=].
+    * Finally, the [=future=] [=releases=] its [=shared state=].
+
+<!-- Based on [futures.state] p5 and p6-->
+11. When a [=future=] attempts to <dfn data-lt="shared state read|read|reads|reading">read</dfn> its [=shared state=]:
+
+  * First, the [=future=] checks the [=shared state's status=].
+  * Then, if [=shared state's status=] is [=ready=]:
+    * The [=future=] copies the value of the content.
+    * Finally, the [=future=] [=releases=] its [=shared state=].
+
+<!-- Based on [futures.state] p6 and p7 -->
+12. When a [=promise=] <dfn data-lt="shared state fulfillment|fulfillment|fulfill|fulfills">fulfills</dfn> its [=shared state=]:
+
+  * First, the [=promise=] checks the [=shared state's status=].
+  * Then, if [=shared state's status=] is not [=ready=]:
+    * The [=promise=] assigns a value or exception to its [=shared state's content=].
+    * The [=promise=] sets its [=shared state's status=] to [=ready=].
+    * Finally, the [=promise=] [=releases=] its [=shared state=].
+    * Then, the [=promise=] unblocks any execution agents that are blocking until the [=shared state=] is [=ready=].
+
+<!-- Based on [future.state] p9 -->
+13. Setting the [=status=] of a [=shared state=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> operations that check the [=shared state's status=].
+
+<!-- Based on [future.state] p9 -->
+14. Successful [=fulfillment=] of a [=shared state=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=reading=] and [=consuming=] the [=shared state=].
+
+<!-- Based on [future.state] p9 -->
+15. If a [=shared state=] has a [=cancellation notifier=], successful [=fulfillment=] of a [=shared state=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=].
+
+<!-- Based on [future.state] p11 -->
+16. [=Reads=] of the same [=shared state=] may <a href="http://eel.is/c++draft/intro.multithread#def:conflict">conflict</a>.
 
 `FutureContinuation` Requirements
 ---------------------------------
