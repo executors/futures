@@ -1,7 +1,8 @@
 <pre class='metadata'>
-Title: Futures
-Shortname: PTODO
-URL: wg21.link/PTODO
+Title: Back to the Future Part III
+Abstract: Proposed future concepts that compose with executors.
+Shortname: P1054
+URL: wg21.link/P1054
 Revision: 0
 Audience: SG1
 Status: D
@@ -13,7 +14,6 @@ Markup Shorthands: biblio yes
 Editor: Lee Howes, Facebook, lwh@fb.com
 Editor: Bryce Adelstein Lelbach, brycelelbach@gmail.com
 Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
-Abstract: Executor-compatible Futures for C++.
 </pre>
 
 Introduction {#intro}
