@@ -1010,8 +1010,18 @@ In the *Return Type* column.
 A type that satisfies the Future requirements for the value type R.
 
 **With:**
-A type that satisfies the ContinuableFutureFuture requirements for the value
+A type that satisfies the ContinuableFuture requirements for the value
 type R and for which `returnvalue.get_executor()` returns x.
+
+
+In the *Operational Semantics* column.
+
+**Replace:**
+in the associated shared state of the resulting Future.
+
+**With:**
+in the resulting ContinuableFuture.
+
 
 
 ThenExecutor requirements
@@ -1035,8 +1045,17 @@ In the *Return Type* column.
 A type that satisfies the Future requirements for the value type R.
 
 **With:**
-A type that satisfies the ContinuableFutureFuture requirements for the value
+A type that satisfies the ContinuableFuture requirements for the value
 type R and for which `returnvalue.get_executor()` returns x.
+
+
+In the *Operational Semantics* column.
+
+**Replace:**
+in the associated shared state of the resulting Future.
+
+**With:**
+in the resulting ContinuableFuture.
 
 
 BulkTwoWayExecutor requirements
@@ -1049,6 +1068,14 @@ A type that satisfies the Future requirements for the value type R.
 **With:**
 A type that satisfies the ContinuableFutureFuture requirements for the value
 type R and for which `returnvalue.get_executor()` returns x.
+
+In the *Operational Semantics* column.
+
+**Replace:**
+in the associated shared state of the resulting Future.
+
+**With:**
+in the resulting ContinuableFuture.
 
 
 BulkThenExecutor requirements
@@ -1074,6 +1101,16 @@ A type that satisfies the Future requirements for the value type R.
 **With:**
 A type that satisfies the ContinuableFutureFuture requirements for the value
 type R and for which `returnvalue.get_executor()` returns x.
+
+
+In the *Operational Semantics* column.
+
+**Replace:**
+in the associated shared state of the resulting Future.
+
+**With:**
+in the resulting ContinuableFuture.
+
 
 twoway_t customization points
 --------------------
@@ -1202,7 +1239,7 @@ template<class Function, class ResultFactory, class SharedFactory>
 *Returns:* A future, whose shared state is made ready when the future returned
 by e.bulk_twoway_execute(f2, n, rf2, sf2) is made ready, containing the result
 in r1 (if decltype(rf1()) is non-void) or any exception thrown by an
-invocationf1. [Note: e.bulk_twoway_execute(f2) may return any future type that
+invocationf1. [Note: e.bulk_twoway_execute(f2) may greturn any future type that
 satisfies the Future requirements, and not necessarily std::experimental::future.
 One possible implementation approach is for the polymorphic wrapper to attach a
 continuation to the inner future via that object's then() member function. When
