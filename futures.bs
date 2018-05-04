@@ -1329,7 +1329,7 @@ struct cancellable_promise_contract_t
 
   template<class Executor>
     friend std::pair<std::promise<T>, std::future<T>>
-      query(const Executor& ex, const cancellable_promise_contract_t& p);
+      query(const Executor& ex, const cancellable_promise_contract_t&);
 
   CancellationCallback cancellation_callback;
 };
@@ -1360,7 +1360,7 @@ future parameter to calls to `then_execute` or `bulk_then_execute`.
 ```
 template<class Executor>
   friend std::pair<std::promise<T>, std::future<T>>
-    query(const Executor& ex, const promise_contract_t&);
+    query(const Executor& ex, const cancellable_promise_contract_t&);
 ```
  * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
   second is a `std::future<T>` such that the future was retrieved from the
