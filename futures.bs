@@ -642,7 +642,7 @@ standard_shared_future(standard_shared_future&& rhs);
 ```
 
  * *Effects:*  Move constructs a future object that refers to the shared state that
-   was originally referred to by rhs (if any).
+    was originally referred to by rhs (if any).
 
  * *Postconditions:*
      * valid() returns the same value as rhs.valid() prior to the constructor invocation.
@@ -663,7 +663,7 @@ standard_shared_future(standard_continuable_future&& rhs);
 ```
 
  * *Effects:* Move constructs a future object that refers to the shared state that
-  was originally referred to by rhs (if any).
+    was originally referred to by rhs (if any).
 
  * *Postconditions:*
     * valid() returns the same value as rhs.valid() prior to the constructor invocation.
@@ -676,49 +676,49 @@ ReturnFuture then(F&&);
 ```
 
  * *Requires:*
-   F satisfies the requirements of FutureContinuation.
+    F satisfies the requirements of FutureContinuation.
 
  * *Returns:* A `ContinuableFuture` that is bound to the executor `e` and
-   that wraps the type returned by execution of either the value or exception
-   operations implemented in the continuation. The type of the returned
-   `ContinuableFuture` is defined by `Executor` `E`.
+    that wraps the type returned by execution of either the value or exception
+    operations implemented in the continuation. The type of the returned
+    `ContinuableFuture` is defined by `Executor` `E`.
 
  * *Effects:*
      * For `NORMAL` defined as the expression `DECAY_COPY(std::forward<F>(g))(val)` if
-       `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void.
+        `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void.
 
      * For `EXCEPTIONAL` defined as the expression
-       `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+        `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
 
      * When `*this` becomes nonexceptionally ready, and if `NORMAL` is a
-       well-formed expression, creates an execution agent which invokes `NORMAL`
-       at most once, with the call to `DECAY_COPY` being evaluated in the thread
-      that called `.then`.
+        well-formed expression, creates an execution agent which invokes `NORMAL`
+        at most once, with the call to `DECAY_COPY` being evaluated in the thread
+        that called `.then`.
 
      * Otherwise, when `*this` becomes exceptionally ready, if `EXCEPTIONAL` is a
-       well-formed expression, creates an execution agent which invokes
-       `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
-       in the thread that called `.then`.
+        well-formed expression, creates an execution agent which invokes
+        `EXCEPTIONAL` at most once, with the call to `DECAY_COPY` being evaluated
+        in the thread that called `.then`.
 
      * If `NORMAL` and `EXCEPTIONAL` are both well-formed expressions,
-       `decltype(EXCEPTIONAL)` shall be convertible to `R`.
+        `decltype(EXCEPTIONAL)` shall be convertible to `R`.
 
      * If `NORMAL` is not a well-formed expression and `EXCEPTIONAL` is a
-       well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
-       `decltype(val)`.
+        well-formed expression, `decltype(EXCEPTIONAL)` shall be convertible to
+        `decltype(val)`.
 
      * If neither `NORMAL` nor `EXCEPTIONAL` are well-formed expressions, the
-       invocation of `.then` shall be ill-formed.
+        invocation of `.then` shall be ill-formed.
 
      * May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
      * The invocation of `.then` synchronizes with
-       (C++Std [intro.multithread]) the invocation of `f`.
+        (C++Std [intro.multithread]) the invocation of `f`.
 
      * Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
-       any exception thrown by either, in the associated shared state of the
-       resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
-       the associated shared state of the resulting `ContinuableFuture`.
+        any exception thrown by either, in the associated shared state of the
+        resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
+        the associated shared state of the resulting `ContinuableFuture`.
 
  * *Postconditions:* No observable change to \*this.
 
@@ -729,7 +729,7 @@ standard_shared_future<T, EI> via(EI ex);
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
-  on which continuations will be enqueued to a new executor.
+    on which continuations will be enqueued to a new executor.
 
  * *Returns:* A standard_shared_future modified to carry executor ex of type EI.
 
@@ -744,17 +744,17 @@ standard_shared_future<T, EI> via(EI ex);
 E get_executor() const;
 ```
  * *Returns:* If is_valid() returns true returns the executor contained within the
-future. Otherwise throws std::future_error.
+    future. Otherwise throws std::future_error.
 
 <br/>
 ```
 standard_semi_future<T> semi();
 ```
  * *Returns:*
-  Returns a standard_semi_future of the same value type as \*this and that
-  completes when this completes, but that erases the executor. is_valid() on the
-  returned standard_semi_future will return the same value as is_valid() on
-  \*this.
+    Returns a standard_semi_future of the same value type as \*this and that
+    completes when this completes, but that erases the executor. is_valid() on the
+    returned standard_semi_future will return the same value as is_valid() on
+    \*this.
 
 <br/>
 ```
@@ -783,7 +783,7 @@ template<class Future>
  * *Effects:* Blocks the calling thread until `f` becomes ready.
 
  * *Synchronization:* The destruction of the continuation that generates `f`'s
-   value synchronizes-with the corresponding `future_wait` return.
+      value synchronizes-with the corresponding `future_wait` return.
 
 <br/>
 `std::this_thread::future_get`
@@ -807,11 +807,11 @@ template<class Future>
 
  * *Returns:*
      * If `f` becomes ready with a value, moves the value from `f` and returns it
-       to the caller.
+        to the caller.
      * If `f` becomes ready with an exception, rethrows the exception.
 
  * *Synchronization:* The destruction of the continuation that generates `f`'s
-   value synchronizes-with the corresponding `future_get` return.
+    value synchronizes-with the corresponding `future_get` return.
 
  * *Throws:* If `f` becomes ready with an exception, that exception is rethrown.
 
@@ -1034,10 +1034,10 @@ In the type requirements list.
 **With:**
  * fut denotes a future object that:
      * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
-       `x.then_execute`, or `x.bulk_then_execute` and meets the
-       `ContinuableFuture` requirements.
+        `x.then_execute`, or `x.bulk_then_execute` and meets the
+        `ContinuableFuture` requirements.
      * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
-       `execution::query(x, cancellable_promise_contract_t<T>)`
+        `execution::query(x, cancellable_promise_contract_t<T>)`
 
 In the *Return Type* column.
 
@@ -1088,10 +1088,10 @@ In the type requirements list.
 **With:**
  * fut denotes a future object that:
      * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
-       `x.then_execute`, or `x.bulk_then_execute` and meets the
-       `ContinuableFuture` requirements.
+        `x.then_execute`, or `x.bulk_then_execute` and meets the
+        `ContinuableFuture` requirements.
      * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
-       `execution::query(x, cancellable_promise_contract_t<T>)`.
+        `execution::query(x, cancellable_promise_contract_t<T>)`.
 
 In the *Return Type* column.
 
