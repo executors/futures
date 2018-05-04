@@ -145,19 +145,31 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`SF<T>`</td>
-  <td>A `SemiFuture` type for type `T`.</td>
+  <td>A `SemiFuture` type for value type `T`.</td>
 </tr>
 <tr>
   <td>`sf`</td>
-  <td>An r-value of type `SF<T>`.</td>
+  <td>An rvalue of type `SF<T>`.</td>
 </tr>
 <tr>
   <td>`E`</td>
-  <td>An executor type.</td>
+  <td>
+    An executor type, either:
+     * A `ThenExecutor` such that `promise_contract_t<T>::static_query_v<E> == true`, or
+     * An `OneWayExecutor` otherwise.
+  </td>
 </tr>
 <tr>
   <td>`e`</td>
   <td>A value of type `E`.</td>
+</tr>
+<tr>
+  <td>`CF<T, E>`</td>
+  <td>
+    A `ContinuableFuture` type for value type `T` and executor type `E`, either:
+    * `decltype(e.get_promise<T>().second)` if `E` is a `ThenExecutor` and `promise_contract_t<T>::static_query_v<E> == true`, or
+    * `continuable_future<T>` otherwise.
+  </td>
 </tr>
 </table>
 
@@ -170,28 +182,26 @@ Descriptive Variable Definitions
   <th>Operational Semantics</th>
 </tr>
 <tr>
-  <td>`future_value_t<SF>`</td>
-  <td>Identical to `T`</td>
+  <td>`future_value_t<SF<T>>`</td>
+  <td>`T`</td>
   <td></td>
 </tr>
 <tr>
-  <td>`future_exception_t<SF>`</td>
-  <td>Convertible to `exception_ptr`</td>
+  <td>`future_exception_t<SF<T>>`</td>
+  <td>Implicitly convertible to `exception_ptr`.</td>
   <td></td>
 </tr>
 <tr>
   <td>`sf.via(e)`</td>
-  <td>Implementation-defined</td>
+  <td>*implementation-defined*</td>
   <td>
-    **Returns:** A `ContinuableFuture` for type `T` that is bound to the executor `e`.
+    **Effects:** A `ContinuableFuture` for value type `T` that is bound to the executor `e` and will be made ready with the content of `sf` when `sf` is made ready.
 
-    **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
+    **Effect:** Returns an implementation-defined `ContinuableFuture` be attached that will run on `e`.
 
-    **Success:** Succeeds if:
-     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
-     * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+    <!-- The compile-time requirements are captured by the description of the type `E` in the descriptive variable table -->
 
-     Fails at compile-time otherwise.
+    **Throws:** If `!execution::query(e, promise_contract_t<T>).second`, throws any exception thrown by `!execution::query(e, oneway_t)`.
   </td>
 </tr>
 </table>
