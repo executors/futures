@@ -1275,6 +1275,10 @@ struct promise_contract_t
   template<class Executor>
   static constexpr decltype(auto) static_query_v
     = Executor::query(promise_contract_t());
+
+  template<class Executor>
+    friend std::pair<std::promise<T>, std::future<T>>
+      query(const Executor& ex, const promise_contract_t&);
 };
 ```
 
@@ -1292,10 +1296,18 @@ When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 `std::pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
-When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
-query is a `std::pair` where the first value is a `std::promise<T>` and the
-second is a `std::future<T>` such that the future was retrieved from the
-promise.
+
+```
+template<class Executor>
+  friend std::pair<std::promise<T>, std::future<T>>
+    query(const Executor& ex, const promise_contract_t&);
+```
+ * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
+  second is a `std::future<T>` such that the future was retrieved from the
+  promise.
+
+ * *Remarks:* This function shall not participate in overload resolution unless
+  `executor_future_t<Executor, T>` is `std::future<T>`.
 
 
 1.3.3.2 Cancellable promise contract
@@ -1314,6 +1326,10 @@ struct cancellable_promise_contract_t
   template<class Executor>
   static constexpr decltype(auto) static_query_v
     = Executor::query(promise_contract_t());
+
+  template<class Executor>
+    friend std::pair<std::promise<T>, std::future<T>>
+      query(const Executor& ex, const cancellable_promise_contract_t& p);
 
   CancellationCallback cancellation_callback;
 };
@@ -1340,10 +1356,18 @@ When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 `std::pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
-When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
-query is a `std::pair` where the first value is a `std::promise<T>` and the
-second is a `std::future<T>` such that the future was retrieved from the
-promise.
+
+```
+template<class Executor>
+  friend std::pair<std::promise<T>, std::future<T>>
+    query(const Executor& ex, const promise_contract_t&);
+```
+ * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
+  second is a `std::future<T>` such that the future was retrieved from the
+  promise.
+
+ * *Remarks:* This function shall not participate in overload resolution unless
+  `executor_future_t<Executor, T>` is `std::future<T>`.
 
 
 Proposed Modifications to Executors P0443
