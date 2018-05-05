@@ -190,7 +190,7 @@ struct is_future_exception_continuation;
 </tr>
 </table>
 
-**`SemiFuture` Requirements**
+<b>`SemiFuture` Requirements</b>
 
 <table border=1>
 <tr>
@@ -212,9 +212,7 @@ struct is_future_exception_continuation;
   <td>`sf.via(e)`</td>
   <td>*implementation-defined*</td>
   <td>
-    **Effects:** A `ContinuableFuture` for value type `T` that is bound to the executor `e` and will be made ready with the content of `sf` when `sf` is made ready.
-
-    **Effect:** Returns an implementation-defined `ContinuableFuture` be attached that will run on `e`.
+    **Returns:** A `ContinuableFuture` for value type `T` that is bound to the executor `e` and will be made ready with the content of `sf` when `sf` is made ready.
 
     <!-- The compile-time requirements are captured by the description of the type `E` in the descriptive variable table -->
 
