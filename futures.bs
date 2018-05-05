@@ -158,7 +158,11 @@ struct is_future_exception_continuation;
 </tr>
 <tr>
   <td>`T`</td>
-  <td>Any (possibly cv-qualified) object type that is not an array.</td>
+  <td>
+    Either:
+    * Any (possibly cv-qualified) object type that is not an array, or
+    * (possibly cv-qualified) `void`.
+  </td>
 </tr>
 <tr>
   <td>`SF<T>`</td>
@@ -252,8 +256,9 @@ Descriptive Variable Definitions
 <tr>
   <td>`T`</td>
   <td>
-    Any (possibly cv-qualified) object type that is not an array.
-    May be void.
+    Either:
+    * Any (possibly cv-qualified) object type that is not an array, or
+    * (possibly cv-qualified) `void`.
   </td>
 </tr>
 <tr>
@@ -262,11 +267,11 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`cf`</td>
-  <td>A value of type `CF<E, F>`.</td>
+  <td>A value of type `CF<E, T>`.</td>
 </tr>
 <tr>
   <td>`rcf`</td>
-  <td>An r-value of type `CF<E, F>`.</td>
+  <td>An rvalue of type `CF<E, T>`.</td>
 </tr>
 <tr>
   <td>`SF<T>`</td>
