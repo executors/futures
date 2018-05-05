@@ -143,7 +143,7 @@ struct is_future_exception_continuation;
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
-1. A <dfn>semi future</dfn> is a [=future=] that is not bound to an executor.
+1. A <dfn>semi future</dfn> is an object that can be bound to an executor to produce a [=future=].
 
 2. A `SemiFuture` type for type `T` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
 
@@ -275,11 +275,11 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`SF<T>`</td>
-  <td>A `SemiFuture` type for type `T`.</td>
+  <td>A `SemiFuture` type for value type `T`.</td>
 </tr>
 <tr>
   <td>`G`</td>
-  <td>A type that satisfies the requirements of `FutureContinuation`.</td>
+  <td>Any type such that `is_future_continuation_v<G, T> == true`.</td>
 </tr>
 <tr>
   <td>`g`</td>
@@ -287,31 +287,24 @@ Descriptive Variable Definitions
 </tr>
 <tr>
  <td>`val`</td>
- <td>The value contained within the successfully completed future RCF.
+ <td>The value contained within the successfully completed future `rcf`.</td>
 </tr>
 <tr>
  <td>`ex`</td>
- <td>The exception contained within the exceptionally completed future RCF.
-</tr>
-<tr>
-  <td>`exception_arg`</td>
-  <td>
-    A tag type used to distinguish between the exceptional and non-exceptional
-    overloads of `operator()` on `fc`.
-  </td>
+ <td>The exception contained within the exceptionally completed future `rcf`.</td>
 </tr>
 <tr>
   <td>`NORMAL`</td>
   <td>
-    The expression `DECAY_COPY(std::forward<F>(g))(std::move(val))` if
-    `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void,
+    Either:
+    * `DECAY_COPY(std::forward<F>(g))()` if `is_same_v<remove_cv_t<T>, void>`, and
+    * `DECAY_COPY(std::forward<F>(g))(std::move(val))` otherwise.
   </td>
 </tr>
 <tr>
   <td>`EXCEPTIONAL`</td>
   <td>
-    The expression
-    `DECAY_COPY(std::forward<F>(f))(exception_arg, std::move(ex))`,
+    The expression `DECAY_COPY(std::forward<F>(f))(exception_arg, std::move(ex))`.
   </td>
 </tr>
 </table>
