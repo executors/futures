@@ -381,17 +381,6 @@ Descriptive Variable Definitions
       of `g`.
   </td>
 </tr>
-<tr>
-  <td>`rcf.semi()`</td>
-  <td>
-    `SF<T>`
-  </td>
-  <td>
-    **Returns:** A `SemiFuture` that completes when `rcf` would have completed.
-
-    **Effects:** Erasing the executor from `rcf`.
-  </td>
-</tr>
 </table>
 
 </center>
