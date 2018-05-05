@@ -159,8 +159,7 @@ template <typename F, typename T>
 2. The struct `exception_arg_t` is an empty structure type used as a unique type to disambiguate `FutureContinuation` overloads that are called when a [=future=]'s [=shared state=] holds an exception from `FutureContinuation` overloads that are called when a [=future=]'s [=shared state=] holds a value.
 
 <!-- Based on [meta.rel] -->
-3.  This sub-clause contains templates that may be used to determine at compile time whether a type meets the requirements of [=future continuations=] for a particular [=future=] value type. Each of these templates is a <a href="http://eel.is/c++draft/meta.rqmts#def:BinaryTypeTraith">`BinaryTypeTrait`</a> with a base characteristic of `true_type` if the corresponding condition is true and `false` otherwise.
-
+3.  This sub-clause contains templates that may be used to determine at compile time whether a type meets the requirements of [=future continuations=] for a particular [=future=] value type. Each of these templates is a <a href="http://eel.is/c++draft/meta.rqmts#def:BinaryTypeTraith">`BinaryTypeTrait`</a> with a base characteristic of `true_type` if the corresponding condition is true, and `false_type` otherwise.
 4.  A `FutureContinuation` type shall meet the `MoveConstructible` requirements and the requirements described in the Tables below.
 
 <center>
@@ -200,7 +199,7 @@ template <typename F, typename T>
 struct is_future_continuation;
 ```
   </td>
-  <td>`is_future_value_continuation<F, T> || is_future_exception_continuation<F>`</td>
+  <td>`is_future_value_continuation_v<F, T> || is_future_exception_continuation_v<F>`</td>
   <td>`T` is a complete type.</td>
 </tr>
 </table>
@@ -375,14 +374,14 @@ struct is_future_continuation;
   <td>`NORMAL`</td>
   <td>
     Either:
-    * If `is_same_v<remove_cv_t<T>, void> == true`, `DECAY_COPY(std::forward<F>(g))()`, and
-    * Otherwise, `DECAY_COPY(std::forward<F>(g))(std::move(val))`.
+    * If `is_same_v<remove_cv_t<T>, void> == true`, `DECAY_COPY(std::forward<G>(g))()`, and
+    * Otherwise, `DECAY_COPY(std::forward<G>(g))(std::move(val))`.
   </td>
 </tr>
 <tr>
   <td>`EXCEPTIONAL`</td>
   <td>
-    The expression `DECAY_COPY(std::forward<F>(f))(exception_arg, std::move(ex))`.
+    The expression `DECAY_COPY(std::forward<G>(g))(exception_arg, std::move(ex))`.
   </td>
 </tr>
 </table>
@@ -434,7 +433,7 @@ struct is_future_continuation;
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
       The invocation of `.then` synchronizes with
-      (C++Std [intro.multithread]) the invocation of `f`.
+      (C++Std [intro.multithread]) the invocation of `g`.
 
       Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
       any exception thrown by either, in the associated shared state of the
@@ -442,7 +441,7 @@ struct is_future_continuation;
       the associated shared state of the resulting `ContinuableFuture`.
 
     **Synchronization:** The destruction of the continuation that generates
-      `rcf`'s value synchronizes-with the start of `g` and with the destruction
+      `rcf`'s value synchronizes with the invocation of `g` and with the destruction
       of `g`.
   </td>
 </tr>
@@ -482,25 +481,29 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
+  <td>`CF<E, T>`</td>
+  <td>A `ContinuableFuture` type for executor type `E` and value type `T`.</td>
+</tr>
+<tr>
   <td>`SHF<E, T>`</td>
   <td>A `SharedFuture` type for executor type `E` and value type `T`.</td>
 </tr>
 <tr>
   <td>`shf`</td>
-  <td>A value of type `CF<E, F>`.</td>
+  <td>A value of type `SHF<E, T>`.</td>
 </tr>
 <tr>
   <td>`NORMAL`</td>
   <td>
-    The expression `DECAY_COPY(std::forward<F>(g))(val)` if
-    `T` is non-void and `DECAY_COPY(std::forward<F>(g))()` if `T` is void,
+    The expression `DECAY_COPY(std::forward<G>(g))(val)` if
+    `T` is non-void and `DECAY_COPY(std::forward<G>(g))()` if `T` is void.
   </td>
 </tr>
 <tr>
   <td>`EXCEPTIONAL`</td>
   <td>
     The expression
-    `DECAY_COPY(std::forward<F>(f))(exception_arg, ex)`,
+    `DECAY_COPY(std::forward<G>(g))(exception_arg, ex)`,
   </td>
 </tr>
 </table>
@@ -554,7 +557,7 @@ Descriptive Variable Definitions
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
       The invocation of `.then` synchronizes with
-      (C++Std [intro.multithread]) the invocation of `f`.
+      (C++Std [intro.multithread]) the invocation of `g`.
 
       Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
       any exception thrown by either, in the associated shared state of the
@@ -1143,7 +1146,7 @@ template<class Future>
  * *Synchronization:* The destruction of the continuation that generates `f`'s
       value synchronizes-with the corresponding `future_wait` return.
 
-<br/>
+
 `std::this_thread::future_get`
 ----------------------------------
 In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
