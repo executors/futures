@@ -812,6 +812,114 @@ public:
 };
 ```
 
+<<<<<<< HEAD
+=======
+`FutureContinuation` helper functions
+-------------------------------------
+
+### Function template `on_value`
+
+<!-- Following parallel algorithms precedent, these functions should take their template parameters by value -->
+
+```c++
+template <class F>
+/* see below */ on_value(F f);
+```
+
+**Requires:**
+  - For a (possibly cv-qualified) object type `T`, `INVOKE(declval<F>(), declval<T>())` must be valid
+  - `F` must meet the requirements of `MoveConstructible`
+
+**Returns:**
+An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+following operational semantics:
+
+- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_value()`.
+    The object `ff` is constructed before the return of `on_value()` and destroyed when `fc` is destroyed.
+- `fc` cannot be invoked with `exception_arg` as the first argument when calling `fc` with more than one argument.
+    [*Note:* This means that calling `fc` in this way must fail to compile *— end note*]
+
+
+### Function template `on_error`
+
+<!-- Following parallel algorithms precedent, these functions should take their template parameters by value -->
+
+```c++
+template <class F>
+/* see below */ on_error(F f);
+```
+
+**Requires:**
+  - `INVOKE(declval<F>(), declval<exception_ptr>())` must be valid
+  - `F` must meet the requirements of `MoveConstructible`
+
+**Returns:**
+An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+following operational semantics:
+
+- `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
+    as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_error()`.
+    The object `ff` is constructed before the return of `on_error()` and destroyed when `fc` is destroyed.
+- `fc` cannot be invoked with one argument. [*Note:* This means that calling
+    `fc` with one argument must in must fail to compile *— end note*]
+
+
+```c++
+template <class F>
+/* see below */ on_expected(F f);
+```
+
+**Requires:**
+  - For a (possibly cv-qualified) object type `T` and a (possibly cv-qualified) object of type `E`, the expressions `INVOKE(declval<F>(), declval<T>())` and `INVOKE(declval<F>(), declval<exception_ptr>())` must be valid.
+  - `F` must meet the requirements of `MoveConstructible`
+
+**Returns:**
+An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+following operational semantics:
+
+- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_expected()`.
+    The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
+- `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
+    as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_expected()`.
+    The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
+
+
+<!-- Note: I've omitted on_visitor() because it is identical in terms of operational semantics to on_expected() and/or requires the pair of types T, E to be explicitly defined -->
+
+```c++
+template <class F, class G>
+/* see below */ on_value_or_error(F f, G g);
+```
+
+**Requires:**
+  - For a (possibly cv-qualified) object type `T` and a (possibly cv-qualified)
+    object of type `E`, the expressions 
+    `INVOKE(declval<F>(), declval<T>())` 
+    `INVOKE(declval<G>(), declval<exception_ptr>())` must be valid.
+  - `F` and `G` must meet the requirements of `MoveConstructible`
+
+**Returns:**
+An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+following operational semantics:
+
+- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
+    argument to `on_value_or_error()`.
+    The object `ff` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
+- `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
+    as `INVOKE(gg, e)`, where `gg` is an instance of `G` move-constructed from the
+    argument to `on_value_or_error()`.
+    The object `gg` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
+
+
+
+>>>>>>> fixed indentation error
 <br/>
 ```
 standard_continuable_future(standard_continuable_future&& rhs);
