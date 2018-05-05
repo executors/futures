@@ -674,7 +674,6 @@ class standard_semi_future {
 public:
     using value_type = T;
 
-    // StandardSemiFuture may be constructed already complete
     standard_semi_future(standard_semi_future&&) = default;
     standard_semi_future(const standard_semi_future&) = delete;
 
@@ -687,11 +686,8 @@ public:
     template<class E>
     explicit standard_semi_future(standard_shared_future<T, E>&&);
 
-    template<class EI, class EO>
-    // Where EI and EO are  one-way or two-way executors.
-    // EO must be derived from EI through the executor
-    // requirement API.
-    standard_continuable_future<T, EO> via(EI) &&;
+    template<class EI>
+    standard_continuable_future<T, EI> via(EI) &&;
 };
 ```
 
@@ -800,18 +796,10 @@ public:
     explicit standard_continuable_future(const standard_shared_future<T, E>&);
 
     template<class ReturnFuture, class F>
-    // Where ReturnFuture will satisfy the requirements of ContinuableFuture,
-    // where is_same_t<ReturnFuture::value_type, result_of_t<decay_t<F>(decay_t<T>)>>
-    // and will either be an instance of standard_continuable_future or
-    // executor_future_t<EO, T> where EO has the same executor properties as
-    // E but with the addition of the twoway_t property.
     ReturnFuture then(FutureContinuation&&) &&;
 
-    template<class EI, class EO>
-    // Where EI and EO are  one-way or two-way executors.
-    // EO must be derived from EI through the executor
-    // requirement API.
-    standard_continuable_future<T, EO> via(EI) &&;
+    template<class EI>
+    standard_continuable_future<T, EI> via(EI) &&;
 
     E get_executor() const;
     standard_semi_future<T> semi() &&;
