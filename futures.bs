@@ -928,9 +928,6 @@ following operational semantics:
 
 
 
->>>>>>> fixed indentation error
-=======
->>>>>>> finished rebasing; should be mergable now
 <br/>
 ```
 standard_continuable_future(standard_continuable_future&& rhs);
@@ -1213,14 +1210,6 @@ standard_shared_future<T, EI> via(EI ex);
       on which continuations will be enqueued to a new executor.
 
  * *Returns:* A standard_shared_future modified to carry executor ex of type EI.
-=======
-- `fc(exception_tag, e)` is valid for objects `e` of type `E` and has the same effects
-    as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_error()`.
-    The object `ff` is constructed before the return of `on_error()` and destroyed when `fc` is destroyed.
-- `fc` cannot be invoked with one argument. [*Note:* This means that calling
-    `fc` with one argument must fail to compile *— end note*]
->>>>>>> Added on_value_or_error()
 
  * *Requires:*
    * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
@@ -1613,7 +1602,6 @@ When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 `std::pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
-<<<<<<< HEAD
 
 ```
 template<class Executor>
@@ -1626,12 +1614,6 @@ template<class Executor>
 
  * *Remarks:* This function shall not participate in overload resolution unless
   `executor_future_t<Executor, T>` is `std::future<T>`.
-=======
-When `e` is neither a `ThenExecutor` nor a `BulkThenExecutor` the result of the
-query is a `std::pair` where the first value is a `std::promise<T>` and the
-second is a `std::future<T>` such that the future was retrieved from the
-promise.
->>>>>>> finished rebasing; should be mergable now
 
 
 Proposed Modifications to Executors P0443
