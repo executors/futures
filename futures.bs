@@ -29,11 +29,11 @@ Contributors:
 * Hartmut  Kaiser
 * Chris    Kohlhoff
 * Chris    Mysen
-* Eric     Niebler 
+* Eric     Niebler
 * Sean     Parent
 * Cory     Perry
-* Felix    Petriconi 
-* Kirk     Shoop 
+* Felix    Petriconi
+* Kirk     Shoop
 * Mathias  Stearn
 
 
@@ -1194,7 +1194,7 @@ template <class F>
   - `F` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
@@ -1219,7 +1219,7 @@ template <class F>
   - `F` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
@@ -1240,7 +1240,7 @@ template <class F>
   - `F` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
@@ -1262,12 +1262,12 @@ template <class F, class G>
 
 **Requires:**
   - For a (possibly cv-qualified) object type `T`,
-    `INVOKE(declval<F>(), declval<T>())` and 
+    `INVOKE(declval<F>(), declval<T>())` and
     `INVOKE(declval<G>(), declval<exception_ptr>())` must be valid.
   - `F` and `G` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
