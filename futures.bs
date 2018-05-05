@@ -29,11 +29,11 @@ Contributors:
 * Hartmut  Kaiser
 * Chris    Kohlhoff
 * Chris    Mysen
-* Eric     Niebler 
+* Eric     Niebler
 * Sean     Parent
 * Cory     Perry
-* Felix    Petriconi 
-* Kirk     Shoop 
+* Felix    Petriconi
+* Kirk     Shoop
 * Mathias  Stearn
 
 
@@ -619,12 +619,23 @@ starting with a promise.
 
 <br/>
 ```
-standard_future<T, promise_default_executor> get_continuable_future();
+standard_continuable_future<T, promise_default_executor> get_continuable_future();
 ```
 
 * *Effects:* Obtained a `standard_continuable_future` that completes on the
     promise's default executor when `this->set_value(v)` or
     `this->set_exception(e)` is called.
+
+* *Postconditions:* Further calls to `get_continuable_future()` or
+    to `get_semi_future()` will throw.
+
+<br/>
+```
+standard_semi_future<T> get_semi_future();
+```
+
+* *Effects:* Obtained a `standard_semi_future` that completes when
+    `this->set_value(v)` or `this->set_exception(e)` is called.
 
 * *Postconditions:* Further calls to `get_continuable_future()` or
     to `get_semi_future()` will throw.
@@ -1262,7 +1273,7 @@ template <class F, class G>
 
 **Requires:**
   - For a (possibly cv-qualified) object type `T`,
-    `INVOKE(declval<F>(), declval<T>())` and 
+    `INVOKE(declval<F>(), declval<T>())` and
     `INVOKE(declval<G>(), declval<exception_ptr>())` must be valid.
   - `F` and `G` must meet the requirements of `MoveConstructible`
 
