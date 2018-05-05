@@ -322,8 +322,6 @@ Descriptive Variable Definitions
   <td>`E`</td>
   <td>
     **Returns:** The executor that the future is bound to.
-
-    **Throws:** Nothing.
   </td>
 </tr>
 <tr>
