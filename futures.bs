@@ -48,76 +48,74 @@ Proposed New Wording
 Future/Promise Model
 ---------------------
 
-<!-- Based on [futures.state] p1 -->
-1.  A <dfn>shared state</dfn> is an object that consists of three components: (possibly not yet produced) content, status, and, optionally, a cancellation notifier.
+<!-- Based on [futures.state] -->
 
-<!-- Based on [futures.state] p1 -->
-2.  A <dfn data-lt="shared state's content|shared state content|content">shared state's content</dfn> is either a value or an exception.
+#.  A <dfn>future</dfn> is an object that executes, on a executor, <dfn>continuations</dfn> that are passed an <dfn>asynchronous result</dfn> as a parameter.
 
-3.  A <dfn data-lt="shared state's status|shared state status|status">shared state's status</dfn> is either [=ready=], <dfn data-lt="shared state not ready|not ready">not ready</dfn>, or <dfn data-lt="shared state consumed|consumed">consumed</dfn>.
+  * A <dfn>unique future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
+  * A <dfn>shared future</dfn> copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
 
-<!-- Based on [future.state] p8 -->
-4.  A [=shared state=] shall be <dfn data-lt="shared state ready|ready">ready</dfn> if and only if it holds a value or an exception ready for retrieval.
+#.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multiple [=shared future=] objects may refer to the same underlying [=shared future=]. - *end note* ]
 
-5.  If it exists, a <dfn data-lt="shared state's cancellation notifier|shared state cancellation notifier|cancellation notifier">shared state's cancellation notifier</dfn> is a nullary <a href="eel.is/c++draft/func.def">callable object</a>. 
+#. The status of a [=future=]:
 
-<!-- Based on [futures.state] p3 -->
-6.  A <dfn>future</dfn> is an object that consumes or reads the content and status of a [=shared state=].
+  * Is either <dfn>ready</dfn>, <dfn>not ready</dfn>, or <dfn>invalid</dfn>.
+  * Shall be [=ready=] if and only if the [=future promise pairs=] [=content=] holds a value or an exception ready for retrieval.
 
-<!-- Based on [futures.state] p4 -->
-7.  A <dfn>promise</dfn> is an object that produces the content and status of a [=shared state=].
+#.  An <dfn>asynchronous result</dfn> is either a value or an exception. The [=result=] is created by the [=promise=] and accessed by the [=future=].
 
-<!-- Based on [futures.state] p5 -->
-8.  When a [=future=] or [=promise=] <dfn data-lt="shared state release|release|releases">releases</dfn> its [=shared state=]:
+#.  A [=future=] may optionally have a <dfn>cancellation notifier</dfn>, which is a nullary <a href="eel.is/c++draft/func.def">callable object</a>.
 
-  * If the [=future=] or [=promise=] holds the last reference to its [=shared state=], the shared state is destroyed; and
-  * The [=future=] or [=promise=] gives up its reference to its [=shared state=]; and
-  * These actions shall not block for the [=shared state=] to become [=ready=].
+#.  When a [=future=] is <dfn data-lt="cancellation|cancel|cancels|cancelled">cancelled</dfn>:
 
-<!-- Based on [futures.state] p5 and p6-->
-9.  When a [=future=] <dfn data-lt="shared state cancellation|cancel|cancels|cancelling">cancels</dfn> its [=shared state=]:
+  * If the [=future=] has a [=cancellation notifier=], it is called in the calling thread.
+  * Then, the [=future's=] status is set to [=invalid=].
 
-  * First, the [=future=] invokes the [=shared state=]'s [=cancellation notifier=].
-  * Finally, the [=future=] [=releases=] its [=shared state=].
+#.  When a [=continuation=] is <dfn data-lt="attachment|attach|attaches|attached">attached</dfn> to a [=future=]:
 
-<!-- Based on [futures.state] p5 and p6-->
-10. When a [=future=] attempts to <dfn data-lt="shared state consumption|consumption|consume|consumes|consuming">consume</dfn> its [=shared state content=]:
+  * First, the [=future's=] [=status=] is checked.
+  * Then, if the [=status=] is [=ready=]:
+    * All of the [=future's=] [=continuations=] are executed with the [=asynchronous result=] as its parameter on the [=future's=] executor.
+    * Finally, if the [=future=] is a [=unique future=], the status is set to [=invalid=].
+  * If the [=status=] is [=not ready=]:
+    * The [=continuation=] is moved (if the [=continuation=] is an rvalue) or copied (if the [=continuation=] is an lvalue) into a new object that is added to the [=future's=] set of [=continuations=].
+  * If the [=status=] is [=invalid=], the behavior is unspecified.
 
-  * First, the [=future=] checks the [=shared state's status=].
-  * Then, if the [=shared state's status=] is [=ready=]:
-    * The [=future=] moves from the content.
-    * Then, the [=future=] sets the [=shared state's status=] to [=consumed=].
-    * Finally, the [=future=] [=releases=] its [=shared state=].
+#.  When a [=promise=] <dfn data-lt="fulfillment|fulfill|fulfills|fulfilled">fulfills</dfn> its associated [=future=] with a value or error, if the lifetime of the [=future=] has not ended:
 
-<!-- Based on [futures.state] p5 and p6-->
-11. When a [=future=] attempts to <dfn data-lt="shared state read|read|reads|reading">read</dfn> its [=shared state=]:
+  * First, the [=status=] of its [=future=] is checked.
+  * Then, if the [=status=] is [=not ready=]:
+    * All of its [=future's=] [=continuations=] are executed with the value or error as a parameter on the [=future's=] executor.
+    * Then, the set of continuations for the associated [=future=] is cleared.
+    * If the [=future=] is a [=unique future=], the status is set to [=invalid=]. Otherwise:
+      * The [=status=] is set to [=ready=].
+      * Finally, any execution agents that are blocking until the [=status=] is [=ready=] are unblocked.
+  * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
 
-  * First, the [=future=] checks the [=shared state's status=].
-  * Then, if [=shared state's status=] is [=ready=]:
-    * The [=future=] copies the value of the content.
-    * Finally, the [=future=] [=releases=] its [=shared state=].
+If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
 
-<!-- Based on [futures.state] p6 and p7 -->
-12. When a [=promise=] <dfn data-lt="shared state fulfillment|fulfillment|fulfill|fulfills">fulfills</dfn> its [=shared state=]:
+#. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
+      [ *Note:* The [=future=] may move (if it is a [=unique future=]) or copy (if it is a [=shared future=]) from the result into a new object to ensure this behavior. - *End Note* ]
+      [ *Note:* The [=future=] may move from [=continuations=] into new object to ensure this behavior. - *End Note* ]
 
-  * First, the [=promise=] checks the [=shared state's status=].
-  * Then, if [=shared state's status=] is not [=ready=]:
-    * The [=promise=] assigns a value or exception to its [=shared state's content=].
-    * The [=promise=] sets its [=shared state's status=] to [=ready=].
-    * Finally, the [=promise=] [=releases=] its [=shared state=].
-    * Then, the [=promise=] unblocks any execution agents that are blocking until the [=shared state=] is [=ready=].
+#.  The lifetime of the [=continuations=] and the [=asynchronous result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
+      [ *Note:* The [=promise=] may move or copy (if the result is `CopyConstructible`) from the result into a new object to ensure this behavior. - *End Note* ]
+      [ *Note:* The [=promise=] may move from continuations into new object to ensure this behavior. - *End Note* ]
 
-<!-- Based on [future.state] p9 -->
-13. Setting the [=status=] of a [=shared state=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> operations that check the [=shared state's status=].
+#.  Upon destruction of a [=promise=]:
 
-<!-- Based on [future.state] p9 -->
-14. Successful [=fulfillment=] of a [=shared state=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=reading=] and [=consuming=] the [=shared state=].
+  * First, the [=promise=] checks the [=status=] of its [=future=].
+  * Then, if the [=status=] is [=not ready=], the [=promise=] shall be [=fulfilled=].
 
-<!-- Based on [future.state] p9 -->
-15. If a [=shared state=] has a [=cancellation notifier=], successful [=fulfillment=] of a [=shared state=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=].
+#.  Setting the [=status=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> operations that check the [=future=]'s status.
 
-<!-- Based on [future.state] p11 -->
-16. [=Reads=] of the same [=shared state=] may <a href="http://eel.is/c++draft/intro.multithread#def:conflict">conflict</a>.
+#.  Operations that modify the set of continuations stored in a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronize with</a> each other.
+
+#.  Successful [=fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=attachment=] of [=continuations=] to that future.
+
+#.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise [=associated=] with that [=future=].
+
+#.  If a [=future=] has a [=cancellation notifier=], successful [=fulfillment=] of it's associated [=promise=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=] of the [=future=].
 
 `FutureContinuation` Requirements
 ---------------------------------
