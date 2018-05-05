@@ -20,17 +20,18 @@ Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
 
 Contributors:
 
-* Michał  Dominiak
-* Carter  Edwards
-* Jay     Feldblum
-* Andrii  Grynenko
-* Jared   Hoberock
-* Hartmut Kaiser
-* Chris   Kohlhoff
-* Chris   Mysen
-* Sean    Parent
-* Felix   Petriconi 
-* Mathias Stearn
+* Marshall Cline
+* Michał   Dominiak
+* Carter   Edwards
+* Jay      Feldblum
+* Andrii   Grynenko
+* Jared    Hoberock
+* Hartmut  Kaiser
+* Chris    Kohlhoff
+* Chris    Mysen
+* Sean     Parent
+* Felix    Petriconi 
+* Mathias  Stearn
 
 Introduction {#intro}
 =====================
