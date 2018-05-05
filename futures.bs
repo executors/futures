@@ -29,9 +29,13 @@ Contributors:
 * Hartmut  Kaiser
 * Chris    Kohlhoff
 * Chris    Mysen
+* Eric     Niebler 
 * Sean     Parent
+* Cory     Perry
 * Felix    Petriconi 
+* Kirk     Shoop 
 * Mathias  Stearn
+
 
 Introduction {#intro}
 =====================
