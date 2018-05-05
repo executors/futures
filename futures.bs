@@ -127,7 +127,8 @@ template <typename F, typename T>
   <th>Preconditions</th>
 </tr>
 <tr>
-  <td>```
+  <td>
+```
 template <typename F, typename T>
 struct is_future_value_continuation;
 ```
@@ -136,7 +137,8 @@ struct is_future_value_continuation;
   <td>`T` is a complete type.</td>
 </tr>
 <tr>
-  <td>```
+  <td>
+```
 template <typename F>
 struct is_future_exception_continuation;
 ```
@@ -145,7 +147,8 @@ struct is_future_exception_continuation;
   <td>`T` is a complete type.</td>
 </tr>
 <tr>
-  <td>```
+  <td>
+```
 template <typename F, typename T>
 struct is_future_continuation;
 ```
