@@ -238,7 +238,7 @@ struct is_future_exception_continuation;
 
 <center>
 
-Descriptive Variable Definitions
+**Descriptive Variable Definitions**
 
 <table border=1>
 <tr>
@@ -274,8 +274,12 @@ Descriptive Variable Definitions
   <td>An rvalue of type `CF<E, T>`.</td>
 </tr>
 <tr>
-  <td>`SF<T>`</td>
-  <td>A `SemiFuture` type for value type `T`.</td>
+ <td>`val`</td>
+ <td>The value contained within the successfully completed future `rcf`.</td>
+</tr>
+<tr>
+ <td>`ex`</td>
+ <td>The exception contained within the exceptionally completed future `rcf`.</td>
 </tr>
 <tr>
   <td>`G`</td>
@@ -286,19 +290,24 @@ Descriptive Variable Definitions
   <td>An object of type `G`.</td>
 </tr>
 <tr>
- <td>`val`</td>
- <td>The value contained within the successfully completed future `rcf`.</td>
+  <td>`R`
+  <td>
+    Either:
+    * If `is_same_v<remove_cv_t<T>, void> == true` and `invoke(g)` is well formed, `decltype(g())`.
+    * If `is_same_v<remove_cv_t<T>, void> != true` and `invoke(g, val)` is well formed, `decltype(g(val))`.
+    * Otherwise, `T`.
+  </td>
 </tr>
 <tr>
- <td>`ex`</td>
- <td>The exception contained within the exceptionally completed future `rcf`.</td>
+  <td>`SF<T>`</td>
+  <td>A `SemiFuture` type for value type `T`.</td>
 </tr>
 <tr>
   <td>`NORMAL`</td>
   <td>
     Either:
-    * `DECAY_COPY(std::forward<F>(g))()` if `is_same_v<remove_cv_t<T>, void>`, and
-    * `DECAY_COPY(std::forward<F>(g))(std::move(val))` otherwise.
+    * If `is_same_v<remove_cv_t<T>, void> == true`, `DECAY_COPY(std::forward<F>(g))()`, and
+    * Otherwise, `DECAY_COPY(std::forward<F>(g))(std::move(val))`.
   </td>
 </tr>
 <tr>
@@ -309,7 +318,7 @@ Descriptive Variable Definitions
 </tr>
 </table>
 
-`ContinuableFuture` Requirements
+<b>`ContinuableFuture` Requirements</b>
 
 <table border=1>
 <tr>
@@ -326,16 +335,7 @@ Descriptive Variable Definitions
 </tr>
 <tr>
   <td>`rcf.then(g)`</td>
-  <td>
-    **If** `T` is non-void and `INVOKE(declval<G>(), declval<T>())` or if `T` is
-      `void` and `INVOKE(declval<G>())` is valid:
-
-      `CF<E, decltype(INVOKE(declval<G>(), declval<T>()))>`
-
-    **Otherwise**:
-
-      `CF<E, T>`
-  </td>
+  <td>`CF<E, R>`</td>
   <td>
     **Returns:** A `ContinuableFuture` that is bound to the executor `e` and
     that wraps the type returned by execution of either the value or exception
