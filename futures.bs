@@ -149,7 +149,7 @@ struct is_future_exception_continuation;
 
 <center>
 
-Descriptive Variable Definitions
+**Descriptive Variable Definitions**
 
 <table border=1>
 <tr>
@@ -190,7 +190,7 @@ Descriptive Variable Definitions
 </tr>
 </table>
 
-`SemiFuture` Requirements
+**`SemiFuture` Requirements**
 
 <table border=1>
 <tr>
