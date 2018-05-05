@@ -40,7 +40,13 @@ Contributors:
 Introduction {#intro}
 =====================
 
-TODO
+This paper aims to provide the conceptual infrastructure for futures needed by executors, as proposed in [p0443](https://wg21.link/P0443).  In that proposal, executors define their own future types, via a type trait, but the generic concept of a future is not explored therein.  The fundamental goal of this work is to provide a minimal hierarchy of future concepts needed to enable interaction of an executor with an arbitrary future type from another executor in a generic context.
+
+The initial design for our conceptual framework comes from [p0904](https://wg21.link/P0904), which is based on the idea that
+
+> a future returned from an API should not expose that API’s execution context to the caller without care, and that the standard means for returning a future from an asynchronous API should lean towards not exposing the execution context."
+
+That work (and a preceding one, [p0783](https://wg21.link/P0783)) introduced the concept of a `SemiFuture` — an entity that cannot be continued from or waited on until it is bound to an executor. 
 
 Proposed New Wording
 ====================
