@@ -1127,15 +1127,19 @@ bool valid() const noexcept;
 ----------------------------------
 In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
 ```
-template<class Future>
-  void future_wait(Future& f) noexcept;
+namespace std {
+  namespace this_thread {
+    template<class Future>
+      void future_wait(Future& f) noexcept;
+  }
+}
 ```
 
 <br/>
 To [thread.thread.this] add:
 ```
 template<class Future>
-  void std::this_thread::future_wait(Future& f) noexcept;
+  void future_wait(Future& f) noexcept;
 ```
 
  * *Requires:* SemiFuture<Future>
@@ -1150,15 +1154,19 @@ template<class Future>
 ----------------------------------
 In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
 ```
-template<class Future>
-  auto future_get(Future& f) -> Future::value_type;
+namespace std {
+  namespace this_thread {
+    template<class Future>
+      auto future_get(Future& f) -> Future::value_type;
+  }
+}
 ```
 
 <br/>
 To [thread.thread.this] add:
 ```
 template<class Future>
-  auto std::this_thread::future_get(std::decay_t<Future>&& f)
+  auto future_get(std::decay_t<Future>&& f)
     -> std::decay_t<Future>::value_type;
 ```
  * *Requires:* SemiFuture<Future>
