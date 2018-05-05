@@ -1176,7 +1176,6 @@ template<class Future>
  * *Returns:*
      * If `f` becomes ready with a value, moves the value from `f` and returns it
         to the caller.
-     * If `f` becomes ready with an exception, rethrows the exception.
 
  * *Synchronization:* The destruction of the continuation that generates `f`'s
       value synchronizes-with the corresponding `future_get` return.
