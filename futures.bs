@@ -1201,7 +1201,7 @@ template <class F>
   - `F` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
@@ -1226,7 +1226,7 @@ template <class F>
   - `F` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
@@ -1247,7 +1247,7 @@ template <class F>
   - `F` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
@@ -1274,7 +1274,7 @@ template <class F, class G>
   - `F` and `G` must meet the requirements of `MoveConstructible`
 
 **Returns:**
-An `FutureContinuation` object, `fc`, of implementation-defined type that meets the
+A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
 
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
