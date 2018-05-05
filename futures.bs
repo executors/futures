@@ -1157,7 +1157,7 @@ In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
 namespace std {
   namespace this_thread {
     template<class Future>
-      auto future_get(Future& f) -> Future::value_type;
+      auto future_get(Future&& f) -> std::decay_t<Future>::value_type;
   }
 }
 ```
@@ -1166,7 +1166,7 @@ namespace std {
 To [thread.thread.this] add:
 ```
 template<class Future>
-  auto future_get(std::decay_t<Future>&& f)
+  auto future_get(Future&& f)
     -> std::decay_t<Future>::value_type;
 ```
  * *Requires:* SemiFuture<Future>
