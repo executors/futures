@@ -1314,7 +1314,7 @@ bool valid() const noexcept;
 ----------------------------
 
 ```c++
-template <class T, class Error=exception_ptr, class Executor>
+template <class T, class Executor>
 /* see below */
 make_promise_contract(const Executor& ex)
   requires execution::is_then_executor_v<Executor> && execution::can_query_v<Executor, promise_contract_t<T, Error>>
@@ -1326,8 +1326,8 @@ make_promise_contract(const Executor& ex)
 <br/>
 
 ```c++
-template <class T, class Error=exception_ptr, class Executor>
-pair<standard_promise<T, Error>, standard_continuable_future<T, decay_t<Executor>>
+template <class T, class Executor>
+pair<standard_promise<T>, standard_continuable_future<T, decay_t<Executor>>
 make_promise_contract(const Executor& ex)
   requires execution::is_one_way_executor_v<Executor>
 ```
@@ -1335,6 +1335,18 @@ make_promise_contract(const Executor& ex)
   * *Returns:* A pair of:
     * a `standard_promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
     * a `standard_continuable_future` that is associated with the [=promise=] and is bound to `ex`.
+
+<br/>
+
+```c++
+template <class T, class Executor>
+pair<standard_promise<T>, standard_continuable_future<T, decay_t<Executor>>
+make_promise_contract()
+```
+
+  * *Returns:* A pair of:
+    * a `standard_promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
+    * a `standard_semi_future` that is associated with the [=promise=].
 
 
 `std::this_thread::future_wait`
