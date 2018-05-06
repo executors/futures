@@ -267,7 +267,7 @@ template <typename F, typename T>
 1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> that consumes the value of a [=future=].
 
 <!-- Based on [optional.nullopt] p1 -->
-2. The struct `exception_arg_t` is an empty structure type used as a unique type to disambiguate `FutureContinuation` overloads that are called when a [=future=]'s [=shared state=] holds an exception from `FutureContinuation` overloads that are called when a [=future=]'s [=shared state=] holds a value.
+2. The struct `exception_arg_t` is an empty structure type used as a unique type to disambiguate `FutureContinuation` overloads that are called when a [=future=] holds an exception from `FutureContinuation` overloads that are called when a [=future=] holds a value.
 
 <!-- Based on [meta.rel] -->
 3.  This sub-clause contains templates that may be used to determine at compile time whether a type meets the requirements of [=future continuations=] for a particular [=future=] value type. Each of these templates is a <a href="http://eel.is/c++draft/meta.rqmts#def:BinaryTypeTraith">`BinaryTypeTrait`</a> with a base characteristic of `true_type` if the corresponding condition is true, and `false_type` otherwise.
@@ -546,10 +546,11 @@ struct is_future_continuation;
       The invocation of `.then` synchronizes with
       (C++Std [intro.multithread]) the invocation of `g`.
 
-      Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
-      any exception thrown by either, in the associated shared state of the
-      resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
-      the associated shared state of the resulting `ContinuableFuture`.
+      [=Fulfills=] the `ContinuableFuture` with the result of the `NORMAL` or
+      `EXCEPTIONAL` expression, or any exception thrown by either.
+      Otherwise, [=fulfills=] the `ContinuableFuture` with either `val` or `e`.
+
+    <!-- This may be covered by the synchronization requirements in the front-matter text (e.g. "future/promise model") -->
 
     **Synchronization:** The destruction of the continuation that generates
       `rcf`'s value synchronizes with the invocation of `g` and with the destruction
@@ -670,10 +671,9 @@ Descriptive Variable Definitions
       The invocation of `.then` synchronizes with
       (C++Std [intro.multithread]) the invocation of `g`.
 
-      Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
-      any exception thrown by either, in the associated shared state of the
-      resulting `ContinuableFuture`. Otherwise, stores either `val` or `e` in
-      the associated shared state of the resulting `ContinuableFuture`.
+      [=Fulfills=] the `ContinuableFuture` with the result of the `NORMAL` or
+      `EXCEPTIONAL` expression, or any exception thrown by either.
+      Otherwise, [=fulfills=] the `ContinuableFuture` with either `val` or `e`.
 
     **Postconditions:** Has no observable affect on `sfh`.
   </td>
@@ -807,8 +807,10 @@ public:
 standard_continuable_future(standard_semi_future&& rhs);
 ```
 
- * *Effects:*  Move constructs a future object that refers to the shared state
-    that was originally referred to by rhs (if any).
+ * *Effects:*  Move constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
+
 
  * *Postconditions:*
      * valid() returns the same value as rhs.valid() prior to the constructor
@@ -820,8 +822,9 @@ standard_continuable_future(standard_semi_future&& rhs);
 standard_semi_future(const standard_semi_future& rhs);
 ```
 
- * *Effects:* Copy constructs a future object that refers to the shared state
-    that was originally referred to by rhs (if any).
+ * *Effects:* Copy constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
 
  * *Postconditions:* valid() returns the same value as rhs.valid() prior to the
     constructor invocation. The validity of rhs does not change.
@@ -832,8 +835,9 @@ template<class E>
 standard_semi_future(standard_continuable_future<T, E>&& rhs);
 ```
 
-* *Effects:* Move constructs a future object that refers to the shared state that
-    was originally referred to by rhs (if any).
+* *Effects:* Move constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
 
 * *Postconditions:*
    * valid() returns the same value as rhs.valid() prior to the constructor invocation.
@@ -849,8 +853,9 @@ template<class E>
 explicit standard_semi_future(const standard_shared_future<T, E>& rhs);
 ```
 
- * *Effects:* Move constructs a future object that refers to the shared state
-    that was originally referred to by rhs (if any).
+ * *Effects:* Move constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
 
  * *Postconditions:*
     * valid() returns the same value as rhs.valid() prior to the constructor
@@ -926,8 +931,9 @@ public:
 standard_continuable_future(standard_continuable_future&& rhs);
 ```
 
- * *Effects:*  Move constructs a future object that refers to the shared state
-    that was originally referred to by rhs (if any).
+ * *Effects:* Move constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
 
  * *Postconditions:*
      * valid() returns the same value as rhs.valid() prior to the constructor
@@ -939,8 +945,9 @@ standard_continuable_future(standard_continuable_future&& rhs);
 standard_continuable_future(const standard_continuable_future& rhs);
 ```
 
- * *Effects:* Copy constructs a future object that refers to the shared state
-    that was originally referred to by rhs (if any).
+ * *Effects:* Copy constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
 
  * *Postconditions:* valid() returns the same value as rhs.valid() prior to the
     constructor invocation. The validity of rhs does not change.
@@ -949,18 +956,29 @@ standard_continuable_future(const standard_continuable_future& rhs);
 ```
 template<class E>
 explicit standard_continuable_future(standard_shared_future<T, E>&& rhs);
+```
 
+ * *Effects:* Move constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
+
+ * *Postconditions:*
+     * valid() returns the same value as rhs.valid() prior to the constructor
+        invocation.
+     * rhs.valid() == false.
+
+<br/>
+```
 template<class E>
 explicit standard_continuable_future(const standard_shared_future<T, E>& rhs);
 ```
 
- * *Effects:* Move constructs a future object that refers to the shared state that
-    was originally referred to by rhs (if any).
+ * *Effects:* Copy constructs a future object from `rhs` that refers to the
+    same [=future=] and its associated with the same [=promise=] (if `rhs`
+    refers to a [=future=]).
 
- * *Postconditions:*
-    * valid() returns the same value as rhs.valid() prior to the constructor
-        invocation.
-    * rhs.valid() == false.
+ * *Postconditions:* valid() returns the same value as rhs.valid() prior to the
+    constructor invocation. The validity of rhs does not change.
 
 <br/>
 ```
