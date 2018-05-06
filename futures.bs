@@ -69,27 +69,27 @@ template <typename T>
 struct SemiFuture
 {
   template <typename Executor>
-  executor_future_t<Executor, T> via(Executor&& exec) &&;
+  ContinuableFuture<Executor, T> via(Executor&& exec) &&;
 };
 
-template <typename T>
+template <typename Executor, typename T>
 struct ContinuableFuture
 {
   template <typename Executor>
-  executor_future_t<Executor, T> via(Executor&& exec) &&;
+  ContinuableFuture<Executor, T> via(Executor&& exec) &&;
 
   template <typename Continuation>
-  ContinuableFuture<auto> then(Continuation&& c) &&;
+  ContinuableFuture<Executor, auto> then(Continuation&& c) &&;
 };
 
 template <typename T>
 struct SharedFuture
 {
   template <typename Executor>
-  executor_future_t<Executor, T> via(Executor&& exec);
+  ContinuableFuture<Executor, auto> via(Executor&& exec);
 
   template <typename Continuation>
-  SharedFuture<auto> then(Continuation&& c);
+  SharedFuture<Executor, auto> then(Continuation&& c);
 };
 
 template <typename T>
