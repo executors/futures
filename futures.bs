@@ -40,7 +40,7 @@ Contributors:
 Introduction {#intro}
 =====================
 
-This paper introduces a hiearchry of concepts for future types that are designed to:
+This paper introduces a hierarchy of concepts for future types that are designed to:
 
 * *Interoperate With Executors:* The concepts should require the functionality needed by [executors](https://wg21.link/P0443).
 * *Compose With Each Other:* The concepts should require the types to be composable.
@@ -50,9 +50,9 @@ There are five concepts introduces in this paper:
 
 * `FutureContinuation`, invocable objects that are called with the value or exception of a future as an argument.
 * `SemiFuture`, which can be bound to an executor, an operation which produces a `ContinuableFuture` (`f = sf.via(exec)`).
-* `ContinuableFuture`, which refine `SemiFuture` and can have one `FutureContinuation` attached to them (`f.then(c)`), which is executed on the future's associated executor when the future becomes ready.
-* `SharedFuture`, which refine `ContinuableFuture` and can have multiple `FutureContinuation`s attached to them.
-* `Promise`, which are associated with a future and make the future ready with either a value or an exception.
+* `ContinuableFuture`, which refines `SemiFuture` and instances can have one `FutureContinuation` attached to them (`f.then(c)`), which is executed on the future's associated executor when the future becomes ready.
+* `SharedFuture`, which refines `ContinuableFuture` and instances can have multiple `FutureContinuation`s attached to them.
+* `Promise`, each of which is associated with a future and make the future ready with either a value or an exception.
 
 Or, described another way:
 
