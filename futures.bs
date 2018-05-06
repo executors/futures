@@ -709,6 +709,10 @@ class standard_promise {
 public:
     using promise_default_executor = implementation-defined;
 
+    standard_promise() = default;
+    standard_promise(standard_promise&&) = default;
+    standard_promise(const standard_promise&) = delete;
+
     standard_continuable_future<T, promise_default_executor>
       get_continuable_future();
 
@@ -727,6 +731,31 @@ code. This executor is intended for use only locally. It may be optimised
 using thread-local storage and should not be constructible. It is not copyable
 and its lifetime is not guaranteed to outlive a single continuation chain
 starting with a promise.
+
+<br/>
+```
+standard_promise();
+```
+
+ * *Effects:* Default constructs a `standard_promise` object that refers to a
+       [=promise=] and from which can be obtained a valid [=future=].
+
+ * *Postconditions:*
+     * valid() == true.
+
+<br/>
+```
+standard_promise(standard_promise&& rhs);
+```
+
+ * *Effects:*  Move constructs a `standard_promise` object from `rhs` that refers
+       to the same [=promise=] and its associated with the same [=future=]
+       (if `rhs` refers to a [=promise=]).
+
+ * *Postconditions:*
+     * valid() returns the same value as rhs.valid() prior to the constructor
+        invocation.
+     * rhs.valid() == false.
 
 <br/>
 ```
