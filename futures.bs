@@ -703,106 +703,141 @@ Descriptive Variable Definitions
 `std::standard_promise`
 -----------------------
 
-```
-template<class T>
+```c++
+template <class T, class Error=exception_ptr>
 class standard_promise {
 public:
-    using promise_default_executor = implementation-defined;
+    using value_type = T;
+    using error_type = Error;
 
-    standard_promise() = default;
-    standard_promise(standard_promise&&) = default;
-    standard_promise(const standard_promise&) = delete;
+    standard_promise() noexcept;
+    standard_promise(standard_promise&&) noexcept;
+    template <typename Promise>
+    explicit standard_promise(Promise&& p);
 
-    standard_continuable_future<T, promise_default_executor>
-      get_continuable_future();
+    void set_value(const T& val) &&;
+    void set_value(T&& val) &&;
+    
+    void set_exception(const Error& err) &&;
+    void set_exception(Error&& err) &&;
 
-    standard_semi_future<T> get_semi_future();
-
-    template<class Value>
-    void set_value(Value&& val);
-
-    template<class Error = std::exception_ptr>
-    void set_exception(Error&& val);
+    bool valid() const noexcept;
+    explicit operator bool() const noexcept;
 };
 ```
 
-The default executor type for promises allows for efficient promise->future
-code. This executor is intended for use only locally. It may be optimised
-using thread-local storage and should not be constructible. It is not copyable
-and its lifetime is not guaranteed to outlive a single continuation chain
-starting with a promise.
+The `standard_promise` class template is provided as:
+- a type-erasing wrapper class for types that meet the requirements of `Promise` 
+- a means of chaining work through `OneWayExecutor`s for which the `promise_contract_t` property cannot be queried.
+
+A `standard_promise` refers to a [=promise=] and is associated with a [=future=], either through type-erasure or through construction of an underlying [=promise=] with the `OneWayExecutor` overload of `make_promise_contract()`.
 
 <br/>
+
 ```
-standard_promise();
+standard_promise() noexcept;
 ```
 
- * *Effects:* Default constructs a `standard_promise` object that refers to a
-       [=promise=] and from which can be obtained a valid [=future=].
+ * *Effects:* Constructs a `standard_promise` object that does not refer to a [=promise=]
 
  * *Postconditions:*
-     * valid() == true.
+     * `valid() == false`.
 
 <br/>
+
 ```
-standard_promise(standard_promise&& rhs);
+standard_promise(standard_promise&& rhs) noexcept;
 ```
 
  * *Effects:*  Move constructs a `standard_promise` object from `rhs` that refers
-       to the same [=promise=] and its associated with the same [=future=]
+       to the same [=promise=] and is associated with the same [=future=]
        (if `rhs` refers to a [=promise=]).
 
  * *Postconditions:*
-     * valid() returns the same value as rhs.valid() prior to the constructor
+     * `valid()` returns the same value as `rhs.valid()` prior to the constructor
         invocation.
-     * rhs.valid() == false.
+     * `rhs.valid() == false`.
 
 <br/>
-```
-standard_continuable_future<T, promise_default_executor> get_continuable_future();
-```
 
-* *Effects:* Obtained a `standard_continuable_future` that completes on the
-    promise's default executor when `this->set_value(v)` or
-    `this->set_exception(e)` is called.
+```
+template <typename Promise>
+standard_promise(Promise&& rhs) noexcept;
+```
+ * *Requires:*
+   - `decay_t<Promise>` is a [=promise=].
+   - `!is_same_v<decay_t<Promise>, standard_promise>`
+   - `!is_reference_v<Promise>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
+   - `is_same_v<typename decay_t<Promise>::value_type, value_type>`
+   - `is_same_v<typename decay_t<Promise>::error_type, error_type>`
 
-* *Postconditions:* Further calls to `get_continuable_future()` or
-    to `get_semi_future()` will throw.
+ * *Effects:*  Constructs a `standard_promise` object that refers to the [=promise=] `rhs` and is associated with the same [=future=] as `rhs`.
+       (if `rhs` is associated with a [=future=]).
+
+ * *Postconditions:*
+     * `valid()` returns the same value as `rhs.valid()` prior to the constructor
+        invocation.
 
 <br/>
-```
-standard_semi_future<T> get_semi_future();
-```
 
-* *Effects:* Obtained a `standard_semi_future` that completes when
-    `this->set_value(v)` or `this->set_exception(e)` is called.
 
-* *Postconditions:* Further calls to `get_continuable_future()` or
-    to `get_semi_future()` will throw.
+```
+void set_value(const T& val) &&;
+```
+ * *Effects:*
+   - If `valid() == true`, equivalent to calling `set_value(val)` on the [=promise=] that `*this` refers to.
+   - Otherwise, throws
+
+ * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
+
+ * *Postconditions:* 
+   - `valid() == false`
+
+ * *Notes:* does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
 
 <br/>
-```
-template<class Value>
-void set_value(Value&& val);
-```
- * *Requires:* The result of `std::decay_t<Value>` is `T`.
 
- * *Effects:* Completes the associated future with value `val`.
+```
+void set_value(T&& val) &&;
+```
+ * *Effects:*
+   - If `valid() == true`, equivalent to calling `set_value(std::move(val))` on the [=promise=] that `*this` refers to.
+   - Otherwise, throws
 
- * *Postconditions:* Further calls to `set_value` or `set_exception` may throw.
+ * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
+
+ * *Postconditions:* 
+   - `valid() == false`
 
 <br/>
+
 ```
-template<class Error = std::exception_ptr>
-void set_exception(Error&& ex);
+void set_exception(const Error& err) &&;
 ```
+ * *Effects:*
+   - If `valid() == true`, equivalent to calling `set_exception(err)` on the [=promise=] that `*this` refers to.
+   - Otherwise, throws
 
- * *Requires:* The result of `std::decay_t<Error>` is `std::exception_ptr`.
+ * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
- * *Effects:* Completes the associated future with exception `ex`.
+ * *Postconditions:* 
+   - `valid() == false`
 
- * *Postconditions:* Further calls to `set_value` or `set_exception` may throw.
+ * *Notes:* does not participate in overload resolution unless `is_copy_constructible_v<decay_t<Error>>`
 
+<br/>
+
+```
+void set_exception(Error&& err) &&;
+```
+ * *Effects:*
+   - If `valid() == true`, equivalent to calling `set_exception(std::move(err))` on the [=promise=] that `*this` refers to.
+   - Otherwise, throws
+
+ * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
+
+ * *Postconditions:* 
+   - `valid() == false`
 
 
 `std::standard_semi_future`
@@ -1279,6 +1314,33 @@ standard_semi_future<T> semi();
 bool valid() const noexcept;
 ```
  * *Returns:* Returns true if this is a valid future. False otherwise.
+
+
+`std::make_promise_contract`
+----------------------------
+
+```c++
+template <class T, class Error=exception_ptr, class Executor>
+/* see below */
+make_promise_contract(const Executor& ex)
+  requires execution::is_then_executor_v<Executor> && execution::can_query_v<Executor, promise_contract_t<T, Error>>
+```
+
+  * *Effects:* equivalent to `execution::query(ex, promise_contract_t<T, Error>{})`
+  * *Returns:* same as `execution::query(ex, promise_contract_t<T, Error>{})`
+
+<br/>
+
+```c++
+template <class T, class Error=exception_ptr, class Executor>
+pair<standard_promise<T, Error>, standard_continuable_future<T, decay_t<Executor>>
+make_promise_contract(const Executor& ex)
+  requires execution::is_one_way_executor_v<Executor>
+```
+
+  * *Returns:* A pair of:
+    * a `standard_promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
+    * a `standard_continuable_future` that is associated with the [=promise=] and is bound to `ex`.
 
 
 `std::this_thread::future_wait`
