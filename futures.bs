@@ -137,7 +137,7 @@ FAQ
 Remember, the future concepts in this paper are intended to express the minimal requirements for executors interoperation and composition.
 Executors do not require a blocking interface, and futures do not require a blocking interface to compose.
 This paper proposes the addition of the free functions `std::this_thread::future_wait` and `std::this_thread::future_get`.
-These functions will block on any `ContinuableFuture` type, and are suitable for use within `std::thread` execution agents.
+These functions will block on any `SemiFuture` type, and are suitable for use within `std::thread` execution agents.
 Some individuals may feel that blocking interfaces are more fundamental for futures than continuation chaining interfaces - some may desire to not provide continuation chaining interfaces at all.
 We believe that this is a perfectly valid design; however, such non-continuable futures are outside of the scope of this work.
 
