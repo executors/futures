@@ -1,6 +1,6 @@
 <pre class='metadata'>
 Title: A Unified Futures Proposal for C++
-Abstract: Proposed future concepts that compose with executors.
+Abstract: Proposed composable future concepts that interoperate with executors.
 Shortname: P1054
 URL: wg21.link/P1054
 Revision: 0
@@ -40,13 +40,120 @@ Contributors:
 Introduction {#intro}
 =====================
 
-This paper aims to provide the conceptual infrastructure for futures needed by executors, as proposed in [p0443](https://wg21.link/P0443).  In that proposal, executors define their own future types, via a type trait, but the generic concept of a future is not explored therein.  The fundamental goal of this work is to provide a minimal hierarchy of future concepts needed to enable interaction of an executor with an arbitrary future type from another executor in a generic context.
+This paper introduces a hiearchry of concepts for future types that are designed to:
 
-The initial design for our conceptual framework comes from [p0904](https://wg21.link/P0904), which is based on the idea that
+* *Interoperate With [Executors](https://wg21.link/P0443):* The concepts should require the functionality needed by executors.
+* *Compose With Each Other:* The concepts should require the types to be composable.
+* *Stay Skinny:* The concepts should require absolutely nothing else so that it is not burdensome to write future types.
 
-> a future returned from an API should not expose that API’s execution context to the caller without care, and that the standard means for returning a future from an asynchronous API should lean towards not exposing the execution context."
+There are five concepts introduces in this paper:
 
-That work (and a preceding one, [p0783](https://wg21.link/P0783)) introduced the concept of a `SemiFuture` — an entity that cannot be continued from or waited on until it is bound to an executor. 
+* `FutureContinuation`s, invocable objects that are called with the value or exception of a future as an argument.
+* `SemiFuture`s, which can be bound to an executor, an operation which produces a `ContinuableFuture` (`f = sf.via(exec)`).
+* `ContinuableFuture`s, which refine `SemiFuture` and can have one `FutureContinuation` attached to them (`f.then(c)`), which is executed on the future's associated executor when the future becomes ready.
+* `SharedFuture`s, which refine `ContinuableFuture` and can have multiple `FutureContinuation`s attached to them.
+* `Promise`s, which are associated with a future and make the future ready with either a value or an exception.
+
+Or, described another way:
+
+```
+template <typename T>
+struct FutureContinuation
+{
+  // At least one of these two overloads exists:
+  auto operator()(T value);
+  auto operator()(exception_arg_t, exception_ptr exception);
+};
+
+template <typename T>
+struct SemiFuture
+{
+  template <typename Executor>
+  executor_future_t<Executor, T> via(Executor&& exec) &&;
+};
+
+template <typename T>
+struct ContinuableFuture
+{
+  template <typename Executor>
+  executor_future_t<Executor, T> via(Executor&& exec) &&;
+
+  template <typename Continuation>
+  ContinuableFuture<auto> then(Continuation&& c) &&;
+};
+
+template <typename T>
+struct SharedFuture
+{
+  template <typename Executor>
+  executor_future_t<Executor, T> via(Executor&& exec);
+
+  template <typename Continuation>
+  SharedFuture<auto> then(Continuation&& c);
+};
+
+template <typename T>
+struct Promise
+{
+  void set_value(T value) &&;
+  void set_exception(exception_ptr exception) &&;
+};
+```
+
+**TODO: Explain that .via is how you convert to a foreign future type.**
+
+**TODO: Explain future model.**
+
+**TODO: Explain cancellation.**
+
+**TODO: Explain how we avoid invalid states via rvalue ref qualifying consuming methods.**
+
+The Error Model
+--------------------
+
+In the example below, let `f` and `g` be `ContinuableFuture`s and let `c` be a `FutureContinuation`.
+
+```
+g = f.then(c);
+```
+
+When `f` is fulfilled:
+
+* If `f` has a value `val`:
+  * If `c(val)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
+  * Otherwise, the future `g`  is fulfilled with the value `val` (this is known as <dfn>future value propagation</dfn>).
+* If `f` fails with error `exc`:
+  * If `c(exception_arg, exc)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
+  * Otherwise, the future `g` is fulfilled with the exception `exc` (this is known as <dfn>future exception propagation</dfn>).
+
+Note that if both overloads are defined, `is_same_v<decltype(G(future_error_t, err)), decltype(G(val))>` shall be true.
+
+FAQ
+---
+
+**Q: Where is `.get` and `.wait`?**
+
+*A:*
+Remember, the future concepts in this paper are intended to express the minimal requirements for executors interoperation and composition.
+Executors do not require a blocking interface, and futures do not require a blocking interface to compose.
+This paper proposes the addition of the free functions `std::this_thread::future_wait` and `std::this_thread::future_get`.
+These functions will block on any `ContinuableFuture` type, and are suitable for use within `std::thread` execution agents.
+Some individuals may feel that blocking interfaces are more fundamental for futures than continuation chaining interfaces - some may desire to not provide continuation chaining interfaces at all.
+We believe that this is a perfectly valid design; however, such non-continuable futures are outside of the scope of this work.
+
+* If you want to write a future that only has blocking interfaces and doesn't support continuations, that's fine! But that type of future cannot interoperate with executors.
+* If you want to write a future that only doesn't have blocking interfaces and does support continuations, that's fine! That type of future can interoperate with executors, so you should conform to the proposed concepts.
+* If you want to write a future that has blocking interfaces and supports continuations, that's fine! That type of future can interoperate with executors, so you should conform to the proposed concepts.
+
+Related Work
+------------
+
+This work is unification of prior papers written individually by the authors:
+
+* [P0701r0](https://wg21.link/P0701r0)
+* [P0701r1](https://wg21.link/P0701r1)
+* [P0783r0](https://wg21.link/P0783r0)
+* [P0904r0](https://wg21.link/P0904r0)
 
 Proposed New Wording
 ====================
