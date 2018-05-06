@@ -42,17 +42,17 @@ Introduction {#intro}
 
 This paper introduces a hiearchry of concepts for future types that are designed to:
 
-* *Interoperate With [Executors](https://wg21.link/P0443):* The concepts should require the functionality needed by executors.
+* *Interoperate With Executors:* The concepts should require the functionality needed by [executors](https://wg21.link/P0443).
 * *Compose With Each Other:* The concepts should require the types to be composable.
 * *Stay Skinny:* The concepts should require absolutely nothing else so that it is not burdensome to write future types.
 
 There are five concepts introduces in this paper:
 
-* `FutureContinuation`s, invocable objects that are called with the value or exception of a future as an argument.
-* `SemiFuture`s, which can be bound to an executor, an operation which produces a `ContinuableFuture` (`f = sf.via(exec)`).
-* `ContinuableFuture`s, which refine `SemiFuture` and can have one `FutureContinuation` attached to them (`f.then(c)`), which is executed on the future's associated executor when the future becomes ready.
-* `SharedFuture`s, which refine `ContinuableFuture` and can have multiple `FutureContinuation`s attached to them.
-* `Promise`s, which are associated with a future and make the future ready with either a value or an exception.
+* `FutureContinuation`, invocable objects that are called with the value or exception of a future as an argument.
+* `SemiFuture`, which can be bound to an executor, an operation which produces a `ContinuableFuture` (`f = sf.via(exec)`).
+* `ContinuableFuture`, which refine `SemiFuture` and can have one `FutureContinuation` attached to them (`f.then(c)`), which is executed on the future's associated executor when the future becomes ready.
+* `SharedFuture`, which refine `ContinuableFuture` and can have multiple `FutureContinuation`s attached to them.
+* `Promise`, which are associated with a future and make the future ready with either a value or an exception.
 
 Or, described another way:
 
@@ -100,7 +100,49 @@ struct Promise
 };
 ```
 
-**TODO: Explain that .via is how you convert to a foreign future type.**
+The model of `SemiFuture` and `.via` gives us control of the transfer of
+execution ownership between executors. In a world where we can chain work on
+futures, using `.then` or a similar mechanism, we always open the question of
+where that work runs. The answer, as proposed by
+[P0443](https://wg21.link/P0443) and the related work is to use executors.
+One problem that comes up in this model is how an API can control how its
+callers chain work on futures that the API returns, without enqueuing more
+work on the API's executor.
+
+There are various mechanisms used in practice to enforce this:
+ * Creating an intermediate executor as a handover type
+ * Taking an executor as a parameter of the API
+
+In [p0783](https://wg21.link/P0783) and [p0904](https://wg21.link/P0904) the
+`SemiFuture` and `via` design was proposed as a mechanism to achieve this.
+An API may return a handle to its work, a future in the most abstract sense,
+that does not provide a means to chain more work. This future will complete on
+whatever executor that API was using. This returned future satisfies the
+`SemiFuture` concept, and the caller is hence aware that to make use of it he
+must attach an executor, using `.via`, to transition from the API's control into
+the caller's control.
+
+From that point on, the caller can use the future as necessary, safely enqueuing
+work onto a known executor, and protecting the API from misuse.
+
+As a simple example:
+```
+std::standard_semi_future<DataType> async_api() {
+  auto f = doAsyncWork();
+  return f.then([](auto&& val){return deserialize(val);});
+}
+
+void caller() {
+  LocalExecutor e;
+  auto sf = async_api();
+  auto f = sf.via(e);
+  f.then([](DataType&& data){
+    std::cout << "Name: " << data.name() << "\n";
+  });
+}
+```
+
+There is a strict separation of control here between `caller` and `async_api`.
 
 **TODO: Explain future model.**
 
