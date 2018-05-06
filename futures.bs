@@ -126,7 +126,7 @@ When `f` is fulfilled:
   * If `c(exception_arg, exc)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
   * Otherwise, the future `g` is fulfilled with the exception `exc` (this is known as <dfn>future exception propagation</dfn>).
 
-Note that if both overloads are defined, `is_same_v<decltype(G(future_error_t, err)), decltype(G(val))>` shall be true.
+Note that if both overloads are defined, `is_same_v<decltype(G(exception_arg, err)), decltype(G(val))>` shall be true.
 
 FAQ
 ---
