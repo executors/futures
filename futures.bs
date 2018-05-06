@@ -168,8 +168,7 @@ Future/Promise Model
   * A <dfn>unique future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
   * A <dfn>shared future</dfn> copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
 
-#.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multiple [=shared future=] objects may refer to the same underlying [=shared future=]. - *end note* ]
-
+#.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multipl
 #. The status of a [=future=]:
 
   * Is either <dfn>ready</dfn>, <dfn>not ready</dfn>, or <dfn>invalid</dfn>.
@@ -186,26 +185,25 @@ Future/Promise Model
 
 #.  When a [=continuation=] is <dfn data-lt="attachment|attach|attaches|attached">attached</dfn> to a [=future=]:
 
-  * First, the [=future's=] [=status=] is checked.
-  * Then, if the [=status=] is [=ready=]:
-    * All of the [=future's=] [=continuations=] are executed with the [=asynchronous result=] as its parameter on the [=future's=] executor.
-    * Finally, if the [=future=] is a [=unique future=], the status is set to [=invalid=].
-  * If the [=status=] is [=not ready=]:
-    * The [=continuation=] is moved (if the [=continuation=] is an rvalue) or copied (if the [=continuation=] is an lvalue) into a new object that is added to the [=future's=] set of [=continuations=].
-  * If the [=status=] is [=invalid=], the behavior is unspecified.
+  * First, the [=status=] of its [=future=] is checked.
+  * Then,
+    * If the [=status=] is [=ready=] or [=not ready=]:
+      * The [=continuation=] is enqueued for execution pending readiness of [=future=] on the [=future's=] executor, with the [=asynchronous result=] as its parameter.
+      * Finally, if the [=future=] is a [=unique future=], the status is set to [=invalid=].
+    * If the [=status=] is [=invalid=], the behavior is unspecified.
 
 #.  When a [=promise=] <dfn data-lt="fulfillment|fulfill|fulfills|fulfilled">fulfills</dfn> its associated [=future=] with a value or error, if the lifetime of the [=future=] has not ended:
 
   * First, the [=status=] of its [=future=] is checked.
-  * Then, if the [=status=] is [=not ready=]:
-    * All of its [=future's=] [=continuations=] are executed with the value or error as a parameter on the [=future's=] executor.
-    * Then, the set of continuations for the associated [=future=] is cleared.
-    * If the [=future=] is a [=unique future=], the status is set to [=invalid=]. Otherwise:
-      * The [=status=] is set to [=ready=].
+  * Then,
+    * If the [=status=] is [=not ready=]:
+      * If the [=future=] is a [=unique future=], the status is set to [=invalid=]. Otherwise, the [=status=] is set to [=ready=]
       * Finally, any execution agents that are blocking until the [=status=] is [=ready=] are unblocked.
-  * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
+    * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
 
 If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
+
+#. [=Fulfillment=] of a [=future=] synchronizes with execution of [=continuations=] that were enqueued for execution by that [=future=].
 
 #. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
       [ *Note:* The [=future=] may move (if it is a [=unique future=]) or copy (if it is a [=shared future=]) from the result into a new object to ensure this behavior. - *End Note* ]
