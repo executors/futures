@@ -1569,9 +1569,10 @@ Wording supplements current text in [p0443](https://wg21.link/P0443).
 1.1.x `Promise` requirements
 --------------------
 
-A type `P` meets the `Promise` requirements for some value type `t`  if an
-instance `p` of `P` satisfies the requirements in the table below. `T` may be
-void.
+<!-- #. A [=promise=] is <dfn>associated with</dfn> a [=future=] if [=completion=] of the [=promise=] results in completion of the associated [=future=] -->
+#. A `Promise` type for value type `T` and error type `E`  shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
+
+Descriptive Variable Definitions
 
 <table border=1>
 <tr>
@@ -1582,8 +1583,8 @@ void.
   <td>`T`</td>
   <td>
     Either:
-    * Any (possibly cv-qualified) object type that is not an array, or
-    * (possibly cv-qualified) `void`.
+      * Any (possibly cv-qualified) object type that is not an array, or
+      * (possibly cv-qualified) `void`.
   </td>
 </tr>
 <tr>
@@ -1634,16 +1635,20 @@ void.
     <td>`p.set_value(t)`</td>
     <td>void</td>
     <td>
+
       * *Requires:* `!is_void_v<T>`
       * *Effects:* Completes the promise and associated future with `t`.
+
     </td>
   </tr>
   <tr>
     <td>`p.set_value()`</td>
     <td>void</td>
     <td>
+
       * *Requires:* `is_void_v<T>`
       * *Effects:* Completes the promise and associated future.
+
     </td>
   </tr>
   <tr>
@@ -1653,7 +1658,7 @@ void.
   </tr>
   <tr>
     <td>
-    `p.valid()`
+      `p.valid()`
     </td>
     <td>contextually convertible to `bool`</td>
     <td>`true` if the promise has an associated future that is incomplete, `false` otherwise</td>
