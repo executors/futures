@@ -92,11 +92,13 @@ struct SharedFuture
   SharedFuture<auto> then(Continuation&& c);
 };
 
-template <typename T>
+template <typename T, typename Error=exception_ptr>
 struct Promise
 {
+  using value_type = T;
+  using error_type = Error;
   void set_value(T value) &&;
-  void set_exception(exception_ptr exception) &&;
+  void set_exception(Error exception) &&;
 };
 ```
 
@@ -1567,9 +1569,48 @@ Wording supplements current text in [p0443](https://wg21.link/P0443).
 1.1.x `Promise` requirements
 --------------------
 
-A type `P` meets the `Promise` requirements for some value type `T` if an
+A type `P` meets the `Promise` requirements for some value type `t`  if an
 instance `p` of `P` satisfies the requirements in the table below. `T` may be
 void.
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>
+    Either:
+    * Any (possibly cv-qualified) object type that is not an array, or
+    * (possibly cv-qualified) `void`.
+  </td>
+</tr>
+<tr>
+  <td>`E`</td>
+  <td>
+    A type contextually convertible to `exception_ptr`
+  </td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>
+    A value of a type contextually convertible to `E`
+  </td>
+</tr>
+<tr>
+  <td>t</td>
+  <td>a value of a type contextually convertible to `T`</td>
+</tr>
+<tr>
+  <td>`P<T, E>`</td>
+  <td>A [=promise=] type for value type `T` and error type `E`</td>
+</tr>
+<tr>
+  <td>`p`</td>
+  <td>An rvalue of type `P<T, E>`</td>
+</tr>
+</table>
 
 <table>
   <tr>
@@ -1578,14 +1619,25 @@ void.
     <th>Operational semantics</th>
   </tr>
   <tr>
-    <td>`p.set_value(T)`</td>
+    <td>`p.set_value(t)`</td>
     <td>void</td>
-    <td>Completes the promise with a value.</td>
+    <td>
+      * *Requires:* `!is_void_v<T>`
+      * *Effects:* Completes the promise and associated future with `t`.
+    </td>
   </tr>
   <tr>
-    <td>`p.set_exception(std::exception_ptr)`</td>
+    <td>`p.set_value()`</td>
     <td>void</td>
-    <td>Completes the promise with an exception wrapped in a `std::exception_ptr`.</td>
+    <td>
+      * *Requires:* `is_void_v<T>`
+      * *Effects:* Completes the promise and associated future.
+    </td>
+  </tr>
+  <tr>
+    <td>`p.set_exception(e)`</td>
+    <td>void</td>
+    <td>Completes the promise and associated future with the error `e`.</td>
   </tr>
 </table>
 
