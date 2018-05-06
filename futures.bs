@@ -441,16 +441,16 @@ struct is_future_continuation;
   </td>
 </tr>
 <tr>
-  <td>`CF<E, T>`</td>
-  <td>A `ContinuableFuture` type for executor type `E` and value type `T`.</td>
+  <td>`CF<T, E>`</td>
+  <td>A `ContinuableFuture` type for value type `T` and executor type `E`.</td>
 </tr>
 <tr>
   <td>`cf`</td>
-  <td>A value of type `CF<E, T>`.</td>
+  <td>A value of type `CF<T, E>`.</td>
 </tr>
 <tr>
   <td>`rcf`</td>
-  <td>An rvalue of type `CF<E, T>`.</td>
+  <td>An rvalue of type `CF<T, E>`.</td>
 </tr>
 <tr>
  <td>`val`</td>
@@ -592,7 +592,7 @@ Descriptive Variable Definitions
   <td>Any (possibly cv-qualified) object type that is not an array.</td>
 </tr>
 <tr>
-  <td>`CF<E, T>`</td>
+  <td>`CF<T, E>`</td>
   <td>A `ContinuableFuture` type for executor type `E` and value type `T`.</td>
 </tr>
 <tr>
@@ -637,7 +637,7 @@ Descriptive Variable Definitions
 
     **Otherwise**:
 
-      `CF<E, T>`
+      `CF<T, E>`
   </td>
   <td>
     **Returns:** A `ContinuableFuture` that is bound to the executor `e` and
