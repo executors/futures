@@ -1593,24 +1593,19 @@ void.
 1.3.3.2 Promise contract
 --------------------
 
-```
-template <T>
+```c++
+template <class T, class Error=exception_ptr>
 struct promise_contract_t
 {
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type
-    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
-
-  template<class Executor>
-  static constexpr decltype(auto) static_query_v
-    = Executor::query(promise_contract_t());
-
-  template<class Executor>
-    friend polymorphic_query_result_type
-      query(const Executor& ex, const promise_contract_t&);
+    = std::pair<std::standard_promise<T, Error>, std::standard_semi_future<T>>;
 };
+
+template <typename T, class Error=exception_ptr>
+inline constexpr promise_contract = promise_contract_t<T, Error>{};
 ```
 
 The `promise_contract_t` property can be used only with query.
@@ -1627,19 +1622,6 @@ When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 `std::pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
-
-```
-template<class Executor>
-  friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
-    query(const Executor& ex, const promise_contract_t&);
-```
- * *Returns:* A `std::pair` where the first value is a
-     `std::standard_promise<T>` and the second is a
-     `std::standard_semi_future<T>` such that the future was
-     retrieved from the promise.
-
- * *Remarks:* This function shall not participate in overload resolution unless
-     `executor_future_t<Executor, T>` is `std::standard_semi_future<T>`.
 
 
 1.3.3.2 Cancellable promise contract
