@@ -355,8 +355,8 @@ struct is_future_continuation;
   <td>`E`</td>
   <td>
     An executor type, either:
-     * A `ThenExecutor` such that `promise_contract_t<T>::static_query_v<E> == true`, or
-     * An `OneWayExecutor` otherwise.
+     * A `ThenExecutor` such that `execution::can_query_v<E, promise_contract_t<T>> == true`, or
+     * A `OneWayExecutor` otherwise.
   </td>
 </tr>
 <tr>
@@ -367,8 +367,8 @@ struct is_future_continuation;
   <td>`CF<T, E>`</td>
   <td>
     A `ContinuableFuture` type for value type `T` and executor type `E`, either:
-    * `decltype(e.get_promise<T>().second)` if `E` is a `ThenExecutor` and `promise_contract_t<T>::static_query_v<E> == true`, or
-    * `continuable_future<T>` otherwise.
+    * `decltype(execution::query(e, promise_contract_t<T>()).second)` if `E` is a `ThenExecutor` and `execution::can_query_v<E, promise_contract_t<T>> == true`, or
+    * `standard_continuable_future<T>` otherwise.
   </td>
 </tr>
 </table>
