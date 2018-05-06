@@ -148,7 +148,34 @@ There is a strict separation of control here between `caller` and `async_api`.
 
 **TODO: Explain cancellation.**
 
-**TODO: Explain how we avoid invalid states via rvalue ref qualifying consuming methods.**
+In a change to the model used in `std::future`, where `std::future::get()` is a
+consuming operation but is l-value qualified, consuming operations in this
+proposal are r-value qualified.
+
+For free functions this should be obvious. If we have a free function
+`future_then` that takes a future and returns a value, we will likely r-value
+qualify it:
+```
+std::future<T2> then(std::future<T>&& f, continuation&& c);
+```
+
+For consistent and safe use, the same should apply to the equivalent builtin
+methods.
+
+In chaining code, this falls out cleanly:
+```
+auto f2 = do_async_thing().then([](T val){return val;}).then([](T2 val){return val;});
+```
+
+Occasionally we must be explicit:
+```
+auto f = do_async_thing();
+auto f2 = std::move(f).then([](T val){return val;}).then([](T2 val){return val;});
+```
+
+but this is a minor inconvenience given that it allows the tooling to warn on
+use-after-move and related misuses.
+
 
 The Error Model
 --------------------
