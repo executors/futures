@@ -1604,11 +1604,11 @@ template<class Executor>
     query(const Executor& ex, const cancellable_promise_contract_t&);
 ```
  * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
-  second is a `std::standard_semi_future<T>` such that the future was retrieved
-  from the promise.
+      second is a `std::standard_semi_future<T>` such that the future was retrieved
+      from the promise.
 
  * *Remarks:* This function shall not participate in overload resolution unless
-  `executor_future_t<Executor, T>` is `std::standard_semi_future<T>`.
+      `executor_future_t<Executor, T>` is `std::standard_semi_future<T>`.
 
 
 Proposed Modifications to Executors P0443
