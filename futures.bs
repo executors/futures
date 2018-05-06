@@ -236,10 +236,10 @@ Future/Promise Model
 
 <!-- Based on [futures.state] -->
 
-#.  A <dfn>future</dfn> is an object that executes, on a executor, <dfn>continuations</dfn> that are passed an <dfn>asynchronous result</dfn> as a parameter.
+#.  A <dfn>future</dfn> is an object that executes, on a executor, <dfn>continuations</dfn> that are passed an [=asynchronous result=] as a parameter.
 
   * A <dfn>unique future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
-  * A <dfn>shared future</dfn> copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
+  * A [=shared future=] copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
 
 #.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multipl
 #. The status of a [=future=]:
@@ -297,7 +297,9 @@ If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
 
 #.  Successful [=fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=attachment=] of [=continuations=] to that future.
 
-#.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise [=associated=] with that [=future=].
+#.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise [=associated with=] that [=future=].
+
+#. A [=promise=] is <dfn data-lt="associated with|associated">associated with</dfn> a [=future=] if [=completion=] of the [=promise=] results in completion of the associated [=future=] 
 
 #.  If a [=future=] has a [=cancellation notifier=], successful [=fulfillment=] of it's associated [=promise=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=] of the [=future=].
 
@@ -1640,7 +1642,6 @@ Wording supplements current text in [p0443](https://wg21.link/P0443).
 1.1.x `Promise` requirements
 --------------------
 
-<!-- #. A [=promise=] is <dfn>associated with</dfn> a [=future=] if [=completion=] of the [=promise=] results in completion of the associated [=future=] -->
 #. A `Promise` type for value type `T` and error type `E`  shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
 
 Descriptive Variable Definitions
