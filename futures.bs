@@ -1651,6 +1651,13 @@ void.
     <td>void</td>
     <td>Completes the promise and associated future with the error `e`.</td>
   </tr>
+  <tr>
+    <td>
+    `p.valid()`
+    </td>
+    <td>contextually convertible to `bool`</td>
+    <td>`true` if the promise has an associated future that is incomplete, `false` otherwise</td>
+  </tr>
 </table>
 
 
