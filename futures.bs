@@ -779,11 +779,10 @@ Descriptive Variable Definitions
 -----------------------
 
 ```c++
-template <class T, class Error=exception_ptr>
+template <class T>
 class standard_promise {
 public:
     using value_type = T;
-    using error_type = Error;
 
     standard_promise() noexcept;
     standard_promise(standard_promise&&) noexcept;
@@ -793,7 +792,7 @@ public:
     void set_value(const T& val) &&;
     void set_value(T&& val) &&;
     
-    void set_exception(const Error& err) &&;
+    template <typename Error>
     void set_exception(Error&& err) &&;
 
     bool valid() const noexcept;
@@ -801,11 +800,7 @@ public:
 };
 ```
 
-The `standard_promise` class template is provided as:
-- a type-erasing wrapper class for types that meet the requirements of `Promise` 
-- a means of chaining work through `OneWayExecutor`s for which the `promise_contract_t` property cannot be queried.
-
-A `standard_promise` refers to a [=promise=] and is associated with a [=future=], either through type-erasure or through construction of an underlying [=promise=] with the `OneWayExecutor` overload of `make_promise_contract()`.
+A `standard_promise` refers to a [=promise=] and is associated with a [=future=], either through type-erasure or through construction of an underlying [=promise=] with an overload of `make_promise_contract()`.
 
 <br/>
 
@@ -843,8 +838,7 @@ standard_promise(Promise&& rhs) noexcept;
    - `decay_t<Promise>` is a [=promise=].
    - `!is_same_v<decay_t<Promise>, standard_promise>`
    - `!is_reference_v<Promise>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
-   - `is_same_v<typename decay_t<Promise>::value_type, value_type>`
-   - `is_same_v<typename decay_t<Promise>::error_type, error_type>`
+   - `is_same_v<promise_value_t<decay_t<Promise>>, value_type>`
 
  * *Effects:*  Constructs a `standard_promise` object that refers to the [=promise=] `rhs` and is associated with the same [=future=] as `rhs`.
        (if `rhs` is associated with a [=future=]).
@@ -887,32 +881,22 @@ void set_value(T&& val) &&;
 <br/>
 
 ```
-void set_exception(const Error& err) &&;
-```
- * *Effects:*
-   - If `valid() == true`, equivalent to calling `set_exception(err)` on the [=promise=] that `*this` refers to.
-   - Otherwise, throws
-
- * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
-
- * *Postconditions:* 
-   - `valid() == false`
-
- * *Notes:* does not participate in overload resolution unless `is_copy_constructible_v<decay_t<Error>>`
-
-<br/>
-
-```
+template <typename Error>
 void set_exception(Error&& err) &&;
 ```
+ * *Requires:*
+   - `Error` is contextually convertible to `exception_ptr`
+
  * *Effects:*
-   - If `valid() == true`, equivalent to calling `set_exception(std::move(err))` on the [=promise=] that `*this` refers to.
+   - If `valid() == true`, equivalent to calling `set_exception(exception_ptr{std::forward<Error>(err)})` on the [=promise=] that `*this` refers to.
    - Otherwise, throws
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
  * *Postconditions:* 
    - `valid() == false`
+
+<br/>
 
 
 `std::standard_semi_future`
@@ -1660,30 +1644,24 @@ Descriptive Variable Definitions
   </td>
 </tr>
 <tr>
-  <td>`E`</td>
-  <td>
-    A type contextually convertible to `exception_ptr`
-  </td>
-</tr>
-<tr>
-  <td>`e`</td>
-  <td>
-    A value of a type contextually convertible to `E`
-  </td>
-</tr>
-<tr>
   <td>t</td>
   <td>a value of a type contextually convertible to `T`</td>
 </tr>
 <tr>
-  <td>`P<T, E>`</td>
-  <td>A [=promise=] type for value type `T` and error type `E`</td>
+  <td>`e`</td>
+  <td>a value of type contextually convertible to `exception_ptr`</td>
+</tr>
+<tr>
+  <td>`P<T>`</td>
+  <td>A [=promise=] type for value type `T`</td>
 </tr>
 <tr>
   <td>`p`</td>
-  <td>An rvalue of type `P<T, E>`</td>
+  <td>An rvalue of type `P<T>`</td>
 </tr>
 </table>
+
+<br/>
 
 <table>
   <tr>
@@ -1692,20 +1670,14 @@ Descriptive Variable Definitions
     <th>Operational semantics</th>
   </tr>
   <tr>
-    <td>P<T, E>::value_type</td>
-    <td>T</td>
-    <td>
-    </td>
-  </tr>
-  <tr>
-    <td>P<T, E>::error_type</td>
-    <td>E</td>
+    <td>`promise_value_t<P<T>>`</td>
+    <td>`T`</td>
     <td>
     </td>
   </tr>
   <tr>
     <td>`p.set_value(t)`</td>
-    <td>void</td>
+    <td>`void`</td>
     <td>
 
       * *Requires:* `!is_void_v<T>`
@@ -1715,7 +1687,7 @@ Descriptive Variable Definitions
   </tr>
   <tr>
     <td>`p.set_value()`</td>
-    <td>void</td>
+    <td>`void`</td>
     <td>
 
       * *Requires:* `is_void_v<T>`
@@ -1725,7 +1697,7 @@ Descriptive Variable Definitions
   </tr>
   <tr>
     <td>`p.set_exception(e)`</td>
-    <td>void</td>
+    <td>`void`</td>
     <td>Completes the promise and associated future with the error `e`.</td>
   </tr>
   <tr>
@@ -1742,18 +1714,18 @@ Descriptive Variable Definitions
 --------------------
 
 ```c++
-template <class T, class Error=exception_ptr>
+template <class T>
 struct promise_contract_t
 {
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type
-    = std::pair<std::standard_promise<T, Error>, std::standard_semi_future<T>>;
+    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
 };
 
-template <typename T, class Error=exception_ptr>
-inline constexpr promise_contract = promise_contract_t<T, Error>{};
+template <typename T>
+inline constexpr promise_contract = promise_contract_t<T>{};
 ```
 
 The `promise_contract_t` property can be used only with query.
