@@ -1619,6 +1619,18 @@ void.
     <th>Operational semantics</th>
   </tr>
   <tr>
+    <td>P<T, E>::value_type</td>
+    <td>T</td>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <td>P<T, E>::error_type</td>
+    <td>E</td>
+    <td>
+    </td>
+  </tr>
+  <tr>
     <td>`p.set_value(t)`</td>
     <td>void</td>
     <td>
