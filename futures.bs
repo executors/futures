@@ -827,6 +827,12 @@ void set_exception(Error&& err) &&;
 
 <br/>
 
+```
+bool valid() const noexcept;
+explicit operator bool() const noexcept;
+```
+
+  * *Returns:* `true` if `*this` refers to a [=promise=] and the referenced promise is `valid()`, or `false` otherwise
 
 `std::standard_semi_future`
 ---------------------------
