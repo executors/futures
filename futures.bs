@@ -1410,8 +1410,8 @@ make_promise_contract(const Executor& ex)
 <br/>
 
 ```c++
-template <class T, class Executor>
-pair<standard_promise<T>, standard_continuable_future<T, decay_t<Executor>>
+template <class T>
+pair<standard_promise<T>, standard_semi_future<T>>
 make_promise_contract()
 ```
 
