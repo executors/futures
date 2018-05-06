@@ -1603,8 +1603,7 @@ This paper provides the wider set of tasks and as a result, the current text in
 
 Future requirements
 --------------------
-Drop this entire section and replace with the `Future` requirements from this
-paper.
+Drop this entire section and replace with the requirements from this paper.
 
 
 TwoWayExecutor requirements
