@@ -1485,6 +1485,8 @@ void.
 --------------------
 
 ```
+namespace std::execution {
+
 template <T>
 struct promise_contract_t
 {
@@ -1492,19 +1494,25 @@ struct promise_contract_t
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type
-    = std::pair<std::promise<T>, std::future<T>>;
+    = pair<standard_promise<T>, standard_continuable_future<T>>;
 
-  template<class Executor>
+  template <class Executor>
   static constexpr decltype(auto) static_query_v
     = Executor::query(promise_contract_t());
 
-  template<class Executor>
-    friend std::pair<std::promise<T>, std::future<T>>
+  template <typename Executor>
+    friend pair<executor_promise_t<Executor, T>, executor_future_t<Executor, T>>
       query(const Executor& ex, const promise_contract_t&);
 };
+
+template <typename Executor>
+  pair<executor_promise_t<T>, executor_future_t<T>>
+    make_promise(Executor);
+
+}
 ```
 
-The `promise_contract_t` property can be used only with query.
+The `promise_contract_t` property can be used only with `query`.
 
 The result of a query of the `promise_contract_t` property applied to a
 `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a `Promise`
@@ -1512,55 +1520,67 @@ and an implementation-defined token type that will be interpreted as a valid
 input future by calls to `then_execute` or `bulk_then_execute` and that is
 satisfied by calling `set_value` or `set_exception` on the promise.
 
-The value returned from `execution::query(e, promise_contract_t<T>)`, where `e`
+The value returned from `query(e, promise_contract_t<T>)`, where `e`
 is an executor and `T` is a type, should be unique for any given call.
 When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
-`std::pair` where first value is an instance of a type matching the `Promise`
+`pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
 
 ```
 template<class Executor>
-  friend std::pair<std::promise<T>, std::future<T>>
+  friend pair<executor_promise_t<Executor, T>, executor_future_t<Executor, T>>
     query(const Executor& ex, const promise_contract_t&);
 ```
- * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
-  second is a `std::future<T>` such that the future was retrieved from the
-  promise.
+* *Returns:* A `pair` where the first value is a `executor_promise_t<T>` and the
+    second is a `executor_future_t<Executor, T>` such that the future was retrieved from the
+    promise.
 
- * *Remarks:* This function shall not participate in overload resolution unless
-  `executor_future_t<Executor, T>` is `std::future<T>`.
-
+```
+template <typename Executor>
+  pair<executor_promise_t<T>, executor_future_t<T>>
+    make_promise(Executor);
+```
+* *Effects:* Equivalent to: `return query(e, promise_contract_t<T>);`
 
 1.3.3.2 Cancellable promise contract
 --------------------
 
 ```
-template <T, C>
+namespace std::execution {
+
+template <typename T, typename CancellationNotifier>
 struct cancellable_promise_contract_t
 {
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type
-    = std::pair<std::promise<T>, std::future<T>>;
+    = pair<standard_promise<T>, standard_continuable_future<T>>;
 
-  template<class Executor>
+  template <typename Executor>
   static constexpr decltype(auto) static_query_v
     = Executor::query(promise_contract_t());
 
-  template<class Executor>
-    friend std::pair<std::promise<T>, std::future<T>>
+  template <typename Executor>
+    friend pair<executor_promise_t<Executor, T>, executor_future_t<Executor, T>>
       query(const Executor& ex, const cancellable_promise_contract_t&);
 
-  CancellationCallback cancellation_callback;
+  cancellable_promise_contract_t(CancellationNotifier&& cn);
+  cancellable_promise_contract_t(const CancellationNotifier& cn);
+
+private:
+  CancellationNotifier cancellation_callback; // exposition only
 };
+
+}
 ```
 
-The `cancellable_promise_contract_t` property can be used only with query.
+The `cancellable_promise_contract_t` property can be used only with `query`.
+
 `cancellable_promise_contract_t` differs from `promise_contract_t` in that the
 query carries a cancellation callback, `cancellation_callback`, that will be
-called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
+called as `invoke(cancellation_callback)` by the `ThenExecutor` on
 cancellation of the task dependent on the future resulting from the
 `cancellable_promise_contract_t` query.
 
@@ -1572,25 +1592,40 @@ is satisfied by calling `set_value` or `set_exception` on the promise and that
 supports cancellation by the executor.
 
 The value returned from
-`execution::query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
+`query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
 where `e` is an executor and `T` is a type, should be unique for any given call.
 When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
-`std::pair` where first value is an instance of a type matching the `Promise`
+`pair` where first value is an instance of a type matching the `Promise`
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
+
+```
+cancellable_promise_contract_t(CancellationNotifier&& cn);
+```
+
+* *Effects:* Move constructs `cancellation_callback` from `move(cn)`.
+
+```
+cancellable_promise_contract_t(CancellationNotifier const& cn);
+```
+
+* *Effects:* Copy constructs `cancellation_callback` from `cn`.
 
 ```
 template<class Executor>
   friend std::pair<std::promise<T>, std::future<T>>
     query(const Executor& ex, const cancellable_promise_contract_t&);
 ```
- * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
-  second is a `std::future<T>` such that the future was retrieved from the
-  promise.
+* *Returns:* A `pair` where the first value is a `executor_promise_t<Executor, T>` and the
+    second is a `executor_future_t<Executor, T>` such that the future was retrieved from the
+    promise.
 
- * *Remarks:* This function shall not participate in overload resolution unless
-  `executor_future_t<Executor, T>` is `std::future<T>`.
-
+```
+template <typename Executor, typename CancellationNotifier>
+  pair<executor_promise_t<Executor, T>, executor_future_t<Executor, T>>
+    make_promise(Executor);
+```
+* *Effects:* Equivalent to: `return query(e, promise_contract_t<T>);`
 
 Proposed Modifications to Executors P0443
 =============================
