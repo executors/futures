@@ -82,11 +82,11 @@ struct ContinuableFuture
   ContinuableFuture<Executor, auto> then(Continuation&& c) &&;
 };
 
-template <typename T>
+template <typename Executor, typename T>
 struct SharedFuture
 {
-  template <typename Executor>
-  ContinuableFuture<Executor, auto> via(Executor&& exec);
+  template <typename RExecutor>
+  ContinuableFuture<RExecutor, auto> via(RExecutor&& exec);
 
   template <typename Continuation>
   SharedFuture<Executor, auto> then(Continuation&& c);
@@ -154,11 +154,11 @@ In a change to the model used in `std::future`, where `std::future::get()` is a
 consuming operation but is l-value qualified, consuming operations in this
 proposal are r-value qualified.
 
-For free functions this should be obvious. If we have a free function
+For free functions this should be obvious. If we had a free function
 `future_then` that takes a future and returns a value, we will likely r-value
 qualify it:
 ```
-std::future<T2> then(std::future<T>&& f, continuation&& c);
+std::future<T2> future_then(std::future<T>&& f, continuation&& c);
 ```
 
 For consistent and safe use, the same should apply to the equivalent builtin
