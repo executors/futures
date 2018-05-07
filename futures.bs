@@ -295,7 +295,9 @@ Future/Promise Model
   * A <dfn>uniquely owned future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
   * A <dfn>non-uniquely owned future</dfn> copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
 
-2.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multipl
+2.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=],
+    multiple [=shared future=] objects may refer to the same underlying [=shared future=]. - *end note* ]
+
 3. The <dfn>status</dfn> of a [=future=]:
 
   * Is either <dfn>ready</dfn>, <dfn>not ready</dfn>, or <dfn>invalid</dfn>.
@@ -324,7 +326,7 @@ Future/Promise Model
   * First, the [=status=] of its [=future=] is checked.
   * Then,
       * If the [=status=] is [=not ready=]:
-          * If the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=]. Otherwise, the [=status=] is set to [=ready=]
+          * The [=status=] is set to [=ready=]
           * Finally, any execution agents that are blocking until the [=status=] is [=ready=] are unblocked.
       * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
 
