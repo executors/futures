@@ -642,7 +642,7 @@ struct is_future_continuation;
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
-1. A <dfn>shared future</dfn> is a [=future=] that is copyable, is bound to an executor and that allows one or more continuation to be attached to it.
+1. A <dfn>shared future</dfn> is a [=non-uniquely owned future=] that is copyable, is bound to an executor and that allows one or more continuation to be attached to it.
 
 2. A `SharedFuture` shall meet the `ContinuableFuture` requirements, the `CopyConstructible` requirements, the `CopyAssignable` requirements and the requirements described in the Tables below.
 
