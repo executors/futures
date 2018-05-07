@@ -14,6 +14,7 @@ Markup Shorthands: biblio yes
 Editor: Lee Howes, Facebook, lwh@fb.com
 Editor: Bryce Adelstein Lelbach, NVIDIA, brycelelbach@gmail.com
 Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
+Editor: Michał Dominiak, Nokia, griwes@griwes.info
 </pre>
 
 <!-- Keep this alphabetical by last name -->
@@ -21,7 +22,6 @@ Editor: David S. Hollman, Sandia National Labs, dshollm@sandia.gov
 Contributors:
 
 * Marshall Cline
-* Michał   Dominiak
 * Carter   Edwards
 * Jay      Feldblum
 * Andrii   Grynenko
