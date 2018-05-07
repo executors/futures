@@ -92,13 +92,13 @@ struct SharedFuture
   SharedFuture<auto> then(Continuation&& c);
 };
 
-template <typename T, typename Error=exception_ptr>
+template <typename T>
 struct Promise
 {
-  using value_type = T;
-  using error_type = Error;
   void set_value(T value) &&;
+  template <typename Error>
   void set_exception(Error exception) &&;
+  bool valid() const;
 };
 ```
 
@@ -766,7 +766,7 @@ standard_promise(Promise&& rhs) noexcept;
  * *Requires:*
    - `Promise` meets the requirements for `Promise<value_type>`
    - `!is_same_v<decay_t<Promise>, standard_promise>`
-   - `!is_reference_v<Promise>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
+   - `!is_reference_v<Promise>` *Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
 
  * *Effects:*  Constructs a `standard_promise` object that refers to the [=promise=] `rhs` and is associated with the same [=future=] as `rhs`.
        (if `rhs` is associated with a [=future=]).
@@ -1316,11 +1316,11 @@ bool valid() const noexcept;
 template <class T, class Executor>
 /* see below */
 make_promise_contract(const Executor& ex)
-  requires execution::is_then_executor_v<Executor> && execution::can_query_v<Executor, promise_contract_t<T, Error>>
+  requires execution::is_then_executor_v<Executor> && execution::can_query_v<Executor, promise_contract_t<T>>
 ```
 
-  * *Effects:* equivalent to `execution::query(ex, promise_contract_t<T, Error>{})`
-  * *Returns:* same as `execution::query(ex, promise_contract_t<T, Error>{})`
+  * *Effects:* equivalent to `execution::query(ex, promise_contract_t<T>{})`
+  * *Returns:* same as `execution::query(ex, promise_contract_t<T>{})`
 
 <br/>
 
