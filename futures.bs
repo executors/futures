@@ -23,33 +23,33 @@ Contributors:
 
 <table border=1>
 <tr>
-<td>Marshall Cline<\td>
-<td>Carter   Edwards<\td>
-<td>Jay      Feldblum<\td>
+<td>Marshall Cline</td>
+<td>Carter   Edwards</td>
+<td>Jay      Feldblum</td>
 </tr>
 <tr>
-<td>Andrii   Grynenko<\td>
-<td>Jared    Hoberock<\td>
-<td>Hartmut  Kaiser<\td>
+<td>Andrii   Grynenko</td>
+<td>Jared    Hoberock</td>
+<td>Hartmut  Kaiser</td>
 </tr>
 <tr>
-<td>Chris    Kohlhoff<\td>
-<td>Chris    Mysen<\td>
-<td>Eric     Niebler<\td>
+<td>Chris    Kohlhoff</td>
+<td>Chris    Mysen</td>
+<td>Eric     Niebler</td>
 </tr>
 <tr>
-<td>Sean     Parent<\td>
-<td>Cory     Perry<\td>
-<td>Felix    Petriconi<\td>
+<td>Sean     Parent</td>
+<td>Cory     Perry</td>
+<td>Felix    Petriconi</td>
 </tr>
 <tr>
-<td>Kirk     Shoop<\td>
-<td>Mathias  Stearn<\td>
+<td>Kirk     Shoop</td>
+<td>Mathias  Stearn</td>
 <td></td>
 </tr>
 </table>
 
-# Introduction {#intro}
+# Introduction # {#intro}
 
 This paper introduces a hierarchy of concepts for future types that are designed to:
 
@@ -107,51 +107,193 @@ template <typename T>
 struct Promise
 {
   void set_value(T value) &&;
+
   template <typename Error>
   void set_exception(Error exception) &&;
   bool valid() const;
 };
 ```
 
-The model of `SemiFuture` and `.via` gives us control of the transfer of
-execution ownership between executors. In a world where we can chain work on
-futures, using `.then` or a similar mechanism, we always open the question of
-where that work runs. The answer, as proposed by
-[P0443](https://wg21.link/P0443) and the related work is to use executors.
-One problem that comes up in this model is how an API can control how its
-callers chain work on futures that the API returns, without enqueuing more
-work on the API's executor.
+In the following sections, we describe some of the key aspects of our proposed
+design.
 
-There are various mechanisms used in practice to enforce this:
- * Creating an intermediate executor as a handover type
- * Taking an executor as a parameter of the API
+## The Future/Promise Execution Model ## {#intro_execution_model}
 
-In [p0783](https://wg21.link/P0783) and [p0904](https://wg21.link/P0904) the
-`SemiFuture` and `via` design was proposed as a mechanism to achieve this.
-An API may return a handle to its work, a future in the most abstract sense,
-that does not provide a means to chain more work. This future will complete on
-whatever executor that API was using. This returned future satisfies the
-`SemiFuture` concept, and the caller is hence aware that to make use of it he
-must attach an executor, using `.via`, to transition from the API's control into
-the caller's control.
+In the Concurrency TS v1, it is unspecified where a `.then`
+  continuation will be run.
+There are a number of possible answers:
 
+* Consumer Side: The consumer execution agent always executes the continuation.
+    `.then` blocks until the producer execution agent signals readiness.
+* Producer Side: The producer execution agent always executes the continuation.
+    `.set_value` blocks until the consumer execution agent signals readiness.
+* `inline_executor` Semantics: If the shared state is ready when the
+    continuation is set, the consumer thread executes the continuation. If the
+    shared state is not ready when the continuation is set, the producer thread
+    executes the continuation.
+* `thread_executor` Semantics: A new `std::thread` executes the
+    continuation.
+
+This is a source of trouble ([[P0701r0]] and [[P0701r1]]).
+The first two answers are undesirable, as they would require blocking, which is
+  not ideal for an asynchronous interface.
+The third and fourth are likewise distasteful, as they can be vague or
+inefficient (respectively).
+
+Executors, finally, give us at least a partial solution to this problem.
+The question changes to "where do we enqueue work into the executor"?
+The answer: work is always enqueued on the consumer side as if, but not
+  necessarily, via `then_execute`.
+You can query executor properties to determine whether or not the executor's
+  APIs will block, which tells you whether or not continuation [=attachment=]
+  (consumer side) or future [=fulfillment=] (producer side) potentially blocks
+  pending execution (e.g. `inline_executor` semantics). 
+
+## Interactions with Executors ## {#intro_executors}
+
+[The executors proposal](https://github.com/executors/executors) defines a collection of executor types intended
+for use managing the execution of tasks on resources.
+There are three fundamental executor categories that cover directionality and
+control of launch:
+ * one-way
+ * two-way
+ * then
+
+The first two could be considered *immediately launched*. That is that once
+handed to the executor, they may start immediately, assuming the internal
+executor policies and resources allow it. This makes them very useful for
+lazy-launch scenarios.
+
+Lazy launch scenarios are common in callback-based code, and in a wide range of
+future library implementations such as <a href="https://github.com/STEllAR-GROUP/hpx">HPX</a>
+and [folly](https://github.com/facebook/folly/tree/master/folly/futures).
+In these designs, a callback is executed on completion of some asynchronous
+work, and that callback enqueues work into the executor.
+This means that work is enqueued only after all dependencies are satisfied.
+
+Then-executors, on the other hand, are intended for explicitly deferred work.
+Work can be handed to the executor dependent on prior work, before that prior
+work is completed.
+This design is fundamentally different, but offers scope for optimization by
+the executor of chains of dependencies that it can batch, without running
+additional code on completion of each.
+
+The current executor design is intentionally generic - it makes few requirements
+on the future types it can use as input dependencies for the `then_execute` and
+`bulk_then_execute` operations.
+We can assume that for a future returned by a previous call to `then_execute`
+or `bulk_then_execute`, the executor understands the implementation of the
+future can can perform whatever dependence tracking and optimization necessary.
+This then is an implementation detail.
+
+However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
+This amounts to a standard API for triggering deferred work.
+
+To solve this we provide two things:
+ * A promise concept, that allows setting of value and/or exception.
+ * A mechanism to retrieve from an executor a pair of a promise and a future, such that the future is a valid input dependence for a call to `then_execute` or `bulk_then_execute`.
+
+The promise is a write-only concept. This simplifies the definition and improves flexibility.
+
+The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
+
+## The Exception Handling Model ## {#intro_exception_model}
+
+Our proposal moves away from future continuations that take futures as an
+  argument, the design used in the Concurrency TS v1.
+Instead, continuations take the value type of the future.
+This, however, requires a new exception handling model.
+Both the executors proposal and this paper adopt the same model, where users
+  can provide callable objects with both a value type and an optional tag
+  disambiguated exception handling overload.
+
+In the example below, let `f` and `g` be `ContinuableFuture`s and let `c` be a `FutureContinuation`.
+
+```
+g = f.then(c);
+```
+
+When `f` is fulfilled:
+
+* If `f` has a value `val`:
+  * If `c(val)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
+  * Otherwise, the future `g`  is fulfilled with the value `val` (this is known as <dfn>future value propagation</dfn> - see [[P0701r0]] and [[P0701r1]]).
+* If `f` fails with exception `exc`:
+  * If `c(exception_arg, exc)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
+  * Otherwise, the future `g` is fulfilled with the exception `exc` (this is known as <dfn>future exception propagation</dfn> - see [[P0701r0]] and [[P0701r1]]).
+
+Note that if both overloads are defined, `decltype(G(exception_arg, err))` shall be convertible to `decltype(G(val))`.
+
+This paper defines some helper types which can be used to build callable
+  arguments that meet the `FutureContinuation` arguments.
+For example, `on_value_or_error(f, g)` takes two callables (a on-value
+  continuation and on-error continuation) and returns a single
+  `FutureContinuation` object composed from the two.
+
+## The Future Cancellation Model ## {#intro_cancellation}
+
+This paper proposes a way to hook a [=cancellation notifier=] into a future/promise pair, using `cancellable_promise_contract_t`.
+It allows for authors of future types to support cancellation if they want to, and to correctly hook into the cancellation mechanisms
+of other futures they interoperate with - such as inside `.via`, where the implementation can create a future/promise pair that will,
+on cancellation, invoke a function that will cancel the current future.
+
+A sample implementation of `.via` could be as follows:
+
+```
+template <typename Executor>
+auto via(Executor && ex) &&
+{
+    auto cancel = [this] { handle_cancellation(); };
+    auto [promise, future] = execution::query(ex, cancellable_promise_contract_t{ cancel });
+    then([promise = std::move(promise)](auto value) { promise.set_value(std::move(value)); });
+    return future;
+}
+```
+
+We are currently not proposing a concrete cancellation API; we plan to do that in a future revision of the paper. At this time, there is
+no guarantee that a future honors a [=cancellation notifier=], and no requirements as to when it actually invokes it.
+
+## `SemiFuture` and `.via` For Composition ## {#intro_semi_future_via}
+
+The `SemiFuture` concept and `.via` mechanism ([[P0783r0]] and [[P0904r0]])  gives
+  us control of the transfer of execution ownership between executors and a way
+  to convert between different future types.
+
+One problem that arises in the [executor model](https://github.com/executors/executors) is how
+  a [=future=]-returning interface can dictate the executor that callers attach
+  continuations to.
+
+`SemiFuture` and `.via` is mechanism that allows the caller to control the
+  executor that subsequent chaining operations use.
+An interface may return a handle to its work, a future in the most abstract sense,
+  that does not provide a means to chain more work.
+This future will complete on whatever executor that interface was using.
+This returned future satisfies the `SemiFuture` concept, and the caller is hence
+  aware that to make use of it they must attach an executor, using `.via`, to
+  transition from the interface's executor to the caller's executor.
 From that point on, the caller can use the future as necessary, safely enqueuing
-work onto a known executor, and protecting the API from misuse.
+  work onto a known executor, and protecting the interface from misuse.
+
+Additionally, since `ContinuableFuture` and `SharedFuture`s are also `SemiFuture`s,
+  `.via` provides a way to convert (if possible) from one future type
+  (associated with a particular executor type) to another "foreign" future type
+  (associated with another executor type).
 
 As a simple example:
+
 ```
 std::execution::semi_future<DataType> async_api() {
   std::execution::continuable_future<APIExecutor, SerializedDataType> =
     doAsyncWork();
   return std::move(f).then(
-    [](SerializedDataType&& val){return deserialize(val);});
+    [](SerializedDataType&& val){ return deserialize(val); });
 }
 
 void caller() {
   LocalExecutor e;
   auto sf = async_api();
   auto f = std::move(sf).via(e);
-  std::move(f).then([](DataType&& data){
+  std::move(f).then([](DataType&& data) {
     std::cout << "Name: " << data.name() << "\n";
   });
 }
@@ -159,8 +301,7 @@ void caller() {
 
 There is a strict separation of control here between `caller` and `async_api`.
 
-**TODO: Explain future model.**
-
+## Consuming Interfaces Are Rvalue Reference Qualified ## {#intro_rvalue_ref}
 
 In a change to the model used in `std::future`, where `std::future::get()` is a
 consuming operation but is l-value qualified, consuming operations in this
@@ -190,48 +331,7 @@ auto f2 = std::move(f).then([](T val){return val;}).then([](T2 val){return val;}
 but this is a minor inconvenience given that it allows the tooling to warn on
 use-after-move and related misuses.
 
-## The Cancellation Model
-
-This paper proposes a way to hook a [=cancellation notifier=] into a future/promise pair, using `cancellable_promise_contract_t`.
-It allows for authors of future types to support cancellation if they want to, and to correctly hook into the cancellation mechanisms
-of other futures they interoperate with - such as inside `.via`, where the implementation can create a future/promise pair that will,
-on cancellation, invoke a function that will cancel the current future.
-
-A sample implementation of `.via` could be as follows:
-```
-template <typename Executor>
-auto via(Executor && ex) &&
-{
-    auto cancel = [this]{ handle_cancellation(); };
-    auto [promise, future] = execution::query(ex, cancellable_promise_contract_t{ cancel });
-    then([promise = std::move(promise)](auto value) { promise.set_value(std::move(value)); });
-    return future;
-}
-```
-
-We are currently not proposing a concrete cancellation API; we plan to do that in a future revision of the paper. At this time, there is
-no guarantee that a future honors a [=cancellation notifier=], and no requirements as to when it actually invokes it.
-
-## The Error Model
-
-In the example below, let `f` and `g` be `ContinuableFuture`s and let `c` be a `FutureContinuation`.
-
-```
-g = f.then(c);
-```
-
-When `f` is fulfilled:
-
-* If `f` has a value `val`:
-  * If `c(val)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
-  * Otherwise, the future `g`  is fulfilled with the value `val` (this is known as <dfn>future value propagation</dfn>).
-* If `f` fails with error `exc`:
-  * If `c(exception_arg, exc)` is well-formed, it is called and the future `g` is fulfilled with the result or any exception thrown from the evaluation.
-  * Otherwise, the future `g` is fulfilled with the exception `exc` (this is known as <dfn>future exception propagation</dfn>).
-
-Note that if both overloads are defined, `decltype(G(exception_arg, err))` shall be convertible to `decltype(G(val))`.
-
-## Blocking Interfaces (`.get` and `.wait`) {#blocking_interfaces}
+## Blocking Interfaces (`.get` and `.wait`) ## {#intro_blocking}
 
 The future concepts in this paper are intended to express the minimal requirements for executors interoperation and composition.
 Executors do not require a blocking interface, and futures do not require a blocking interface to compose.
@@ -244,64 +344,34 @@ We believe that this is a perfectly valid design; however, such non-continuable 
 * If you want to write a future that only doesn't have blocking interfaces and does support continuations, that's fine! That type of future can interoperate with executors, so you should conform to the proposed concepts.
 * If you want to write a future that has blocking interfaces and supports continuations, that's fine! That type of future can interoperate with executors, so you should conform to the proposed concepts.
 
-## Proposed Addition to Executors [[P0443]] {#wording_executors}
+[[P0701r0]] and [[P0701r1]] discuss some of the challenges relating to future/promise synchronization that motivated the current design.
 
-[p0443](https://wg21.link/P0443) defines a collection of executor types intended
-for use managing the execution of tasks on resources.
-There are three fundamental executor categories that cover directionality and
-control of launch:
- * one-way
- * two-way
- * then
+## Future Work ## {#intro_future_work}
 
-The first two could be considered *immediately launched*. That is that once
-handed to the executor, they may start immediately, assuming the internal
-executor policies and resources allow it. This makes them very useful for
-lazy-launch scenarios.
+There is plenty of future work on futures to be done.
+Here is a list of topics that are currently on our agenda:
 
-Lazy launch scenarios are common in callback-based code, and in a wide range of
-future library implementations such as
-[folly](https://github.com/facebook/folly/tree/master/folly/futures).
-In these designs, a callback is executed on completion of some asynchronous
-work, and that callback enqueues work into the executor.
-This means that work is enqueued only after all dependencies are satisfied.
+* Forward progress guarantees for futures and promises.
+* Requirements on synchronization for use of futures and promises from non-concurrent execution agents.
+* `std::future`/`std::promise` interoperability.
+* Future unwrapping, both `future<future<T>>` and more advanced forms.
+* `when_all`/`when_any`/`when_n`.
+* `async`.
 
-Then-executors, on the other hand, are intended for explicitly deferred work.
-Work can be handed to the executor dependent on prior work, before that prior
-work is completed.
-This design is fundamentally different, but offers scope for optimization by
-the executor of chains of dependencies that it can batch, without running
-additional code on completion of each.
+## Prior Work ## {#intro_prior_work}
 
-The current executor design is intentionally generic - it makes few requirements
-on the future types it can use as input dependencies for the `then_execute` and
-`bulk_then_execute` operations.
-We can assume that for a future returned by a previous call to `then_execute`
-or `bulk_then_execute`, the executor understands the implementation of the
-future can can perform whatever dependence tracking and optimization necessary.
-This then is an implementation detail.
+This work is unification of prior papers written individually by the authors:
 
-However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
-This amounts to a standard API for triggering deferred work.
+* [[P0701r0]]
+* [[P0701r1]]
+* [[P0783r0]]
+* [[P0904r0]]
+ 
+# Proposed New Wording # {#wording}
 
-Proposed solution
--------------------
+The following wording is purely additive to [the executors proposal](https://github.com/executors/executors).
 
-To solve this we provide two things:
- * A promise concept, that allows setting of value and/or exception.
- * A mechanism to retrieve from an executor a pair of a promise and a future, such that the future is a valid input dependence for a call to `then_execute` or `bulk_then_execute`.
-
-The promise is a write-only concept. This simplifies the definition and improves flexibility.
-
-The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
-
-Proposed New Wording
-====================
-
-Wording supplements current text in [p0443](https://wg21.link/P0443).
-
-Future/Promise Model
----------------------
+## The Future/Promise Execution Model ## {#wording_execution_model}
 
 <!-- Based on [futures.state] -->
 
@@ -316,9 +386,9 @@ Future/Promise Model
 3. The <dfn>status</dfn> of a [=future=]:
 
   * Is either <dfn>ready</dfn>, <dfn>not ready</dfn>, or <dfn>invalid</dfn>.
-  * Shall be [=ready=] if and only if the [=future promise pairs=] [=content=] holds a value or an exception ready for retrieval.
+  * Shall be [=ready=] if and only if the [=future=] holds a value or an exception ready for retrieval.
 
-4.  An <dfn>asynchronous result</dfn> is either a value or an exception. The [=result=] is created by the [=promise=] and accessed by the [=future=].
+4.  An <dfn>asynchronous result</dfn> is either a value or an exception. The result is created by the [=promise=] and accessed by the [=future=].
 
 5.  A [=future=] may optionally have a <dfn>cancellation notifier</dfn>, which is a nullary <a href="eel.is/c++draft/func.def">callable object</a>.
 
@@ -349,7 +419,7 @@ Future/Promise Model
 
 9. [=Fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> execution of [=continuations=] that were enqueued for execution by that [=future=].
 
-10. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
+10. The lifetime of the [=continuations=] and the [=asynchronous result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
       [ *Note:* The [=future=] may move (if it is a [=uniquely owned future=]) or copy (if it is a [=non-uniquely owned future=]) from the result into a new object to ensure this behavior. - *End Note* ]
       [ *Note:* The [=future=] may move from [=continuations=] into new object to ensure this behavior. - *End Note* ]
 
@@ -368,14 +438,15 @@ Future/Promise Model
 
 15.  Successful [=fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=attachment=] of [=continuations=] to that future.
 
-16.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise [=associated with=] that [=future=].
+16.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise associated with that [=future=].
 
-17. A [=promise=] is <dfn data-lt="associated with|associated">associated with</dfn> a [=future=] if [=completion=] of the [=promise=] results in completion of the associated [=future=].
+<!--
+17. A [=promise=] is <dfn data-lt="associated with|associated">associated with</dfn> a [=future=] if [=fulfillment=] of the promise results in completion of the associated [=future=].
+-->
 
-18.  If a [=future=] has a [=cancellation notifier=], successful [=fulfillment=] of it's associated [=promise=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=] of the [=future=].
+17.  If a [=future=] has a [=cancellation notifier=], successful [=fulfillment=] of it's associated [=promise=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=] of the [=future=].
 
-`FutureContinuation` Requirements
----------------------------------
+## `FutureContinuation` Requirements ## {#wording_future_continuation}
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
@@ -463,8 +534,7 @@ struct is_future_continuation;
 
 </center>
 
-`Promise` requirements
---------------------
+## `Promise` Requirements ## {#wording_promise}
 
 #. A `Promise` type for value type `T` and error type `E`  shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
 
@@ -519,7 +589,6 @@ Descriptive Variable Definitions
     <td>`p.set_value(t)`</td>
     <td>`void`</td>
     <td>
-
       * *Requires:* `!is_void_v<T>`
       * *Effects:* Completes the promise and associated future with `t`.
 
@@ -529,7 +598,6 @@ Descriptive Variable Definitions
     <td>`p.set_value()`</td>
     <td>`void`</td>
     <td>
-
       * *Requires:* `is_void_v<T>`
       * *Effects:* Completes the promise and associated future.
 
@@ -544,13 +612,13 @@ Descriptive Variable Definitions
     <td>
       `p.valid()`
     </td>
-    <td>contextually convertible to `bool`</td>
-    <td>`true` if the promise has an associated future that is incomplete, `false` otherwise</td>
+    <td>Contextually convertible to `bool`.</td>
+    <td>`true` if the promise has an associated future that is incomplete, `false` otherwise.</td>
   </tr>
 </table>
 
 
-### Promise contract
+### Promise Contract Executor Properties ### {#wording_promise_contracts}
 
 ```c++
 template <class T>
@@ -582,9 +650,6 @@ When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
 
-
-### Cancellable promise contract
-
 ```
 template <T, C>
 struct cancellable_promise_contract_t
@@ -603,14 +668,14 @@ struct cancellable_promise_contract_t
     friend std::pair<std::execution::promise<T>, std::execution::semi_future<T>>
       query(const Executor& ex, const cancellable_promise_contract_t&);
 
-  CancellationCallback cancellation_callback;
+  CancellationNotifier cancellation_notifier;
 };
 ```
 
 The `cancellable_promise_contract_t` property can be used only with query.
 `cancellable_promise_contract_t` differs from `promise_contract_t` in that the
-query carries a cancellation callback, `cancellation_callback`, that will be
-called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
+query carries a cancellation callback, `cancellation_notifier`, that will be
+called as `std::invoke(cancellation_notifier)` by the `ThenExecutor` on
 cancellation of the task dependent on the future resulting from the
 `cancellable_promise_contract_t` query.
 
@@ -622,7 +687,7 @@ is satisfied by calling `set_value` or `set_exception` on the promise and that
 supports cancellation by the executor.
 
 The value returned from
-`execution::query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
+`execution::query(e, cancellable_promise_contract_t<T>{cancellation_notifier})`,
 where `e` is an executor and `T` is a type, should be unique for any given call.
 When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
 `std::pair` where first value is an instance of a type matching the `Promise`
@@ -642,8 +707,7 @@ template<class Executor>
       `executor_future_t<Executor, T>` is `std::execution::semi_future<T>`.
 
 
-`SemiFuture` Requirements
--------------------------
+## `SemiFuture` Requirements ## {#wording_semi_future}
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
@@ -720,7 +784,7 @@ template<class Executor>
   <td>`sf.via(e)`</td>
   <td>*implementation-defined*</td>
   <td>
-    **Returns:** A `ContinuableFuture` for value type `T` that is bound to the executor `e` and will be made ready with the content of `sf` when `sf` is made ready.
+    **Returns:** A `ContinuableFuture` for value type `T` that is bound to the executor `e` and will be made ready with the value or exception of `sf` when `sf` is made ready.
 
     <!-- The compile-time requirements are captured by the description of the type `E` in the descriptive variable table -->
 
@@ -731,8 +795,7 @@ template<class Executor>
 
 </center>
 
-`ContinuableFuture` Requirements
---------------------------------
+## `ContinuableFuture` Requirements ## {#wording_continuable_future}
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
@@ -886,9 +949,7 @@ template<class Executor>
 
 </center>
 
-
-`SharedFuture` Requirements
---------------------------------
+## `SharedFuture` Requirements ## {#wording_shared_future}
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
@@ -898,7 +959,7 @@ template<class Executor>
 
 <center>
 
-Descriptive Variable Definitions
+<b>Descriptive Variable Definitions</b>
 
 <table border=1>
 <tr>
@@ -945,7 +1006,7 @@ Descriptive Variable Definitions
 </tr>
 </table>
 
-`SharedFuture` Requirements
+<b>`SharedFuture` Requirements</b>
 
 <table border=1>
 <tr>
@@ -957,7 +1018,7 @@ Descriptive Variable Definitions
   <td>`shf.then(g)`</td>
   <td>
     **If** `T` is non-void and `INVOKE(declval<G>(), declval<T>())` or if `T` is
-      `void` and `INVOKE(declval<G>())` is valid:
+      `void` and `INVOKE(declval<G>())` is well-formed:
 
       `CF<E, decltype(INVOKE(declval<G>(), declval<T>()))>`
 
@@ -1012,7 +1073,7 @@ Descriptive Variable Definitions
     **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
 
     **Success:** Succeeds if:
-     * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+     * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
      * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
      Fails at compile-time otherwise.
@@ -1025,8 +1086,7 @@ Descriptive Variable Definitions
 
 </center>
 
-`std::execution::promise`
------------------------
+## `std::execution::promise` ## {#wording_erasing_promise}
 
 ```c++
 template <class T>
@@ -1128,7 +1188,7 @@ void set_exception(Error&& err) &&;
    - `Error` is contextually convertible to `exception_ptr`
 
  * *Effects:*
-   - If `valid() == true`, equivalent to calling `set_exception(exception_ptr{std::forward<Error>(err)})` on the [=promise=] that `*this` refers to.
+   - If `valid() == true`, equivalent to calling `set_exception(exception_ptr{forward<Error>(err)})` on the [=promise=] that `*this` refers to.
    - Otherwise, throws
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
@@ -1145,8 +1205,7 @@ explicit operator bool() const noexcept;
 
   * *Returns:* `true` if `*this` refers to a [=promise=] and the referenced promise is `valid()`, or `false` otherwise
 
-`std::execution::semi_future`
----------------------------
+## `std::execution::semi_future` ## {#wording_erasing_semi_future}
 
 ```
 template<class T>
@@ -1243,10 +1302,7 @@ continuable_future<T, EI> via(EI ex) &&;
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where
-     `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or
-     `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)`
-     is valid.
+   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* valid() == false.
@@ -1258,8 +1314,7 @@ bool valid() const noexcept;
 
  * *Returns:* Returns true if this is a valid future. False otherwise.
 
-`std::execution::continuable_future`
-----------------------------------
+## `std::execution::continuable_future` ## {#wording_erasing_continuable_future}
 
 ```
 template<class T, class E>
@@ -1414,10 +1469,7 @@ continuable_future<T, EI> via(EI ex) &&;
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where
-      `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or
-      `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)`
-      is valid.
+   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
   * *Postconditions:* valid() == false.
@@ -1455,15 +1507,10 @@ shared_future<T, E> share() &&;
 
  * *Postconditions:* valid() == false.
 
-
-
-
-
-`std::execution::shared_future`
-----------------------------------
+## `std::execution::shared_future` ## {#wording_erasing_shared_future}
 
 ```
-namespace std {
+namespace std::execution {
   template<class T, class E>
   class shared_future {
   public:
@@ -1592,7 +1639,7 @@ shared_future<T, EI> via(EI ex);
  * *Returns:* A shared_future modified to carry executor ex of type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
+   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* No observable change to \*this.
@@ -1621,8 +1668,7 @@ bool valid() const noexcept;
  * *Returns:* Returns true if this is a valid future. False otherwise.
 
 
-`std::execution::make_promise_contract`
-----------------------------
+## `std::execution::make_promise_contract` ## {#wording_make_promise_contract}
 
 ```c++
 template <class T, class Executor>
@@ -1659,7 +1705,7 @@ make_promise_contract()
     * a `promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
     * a `semi_future` that is associated with the [=promise=].
 
-## Generic Future Blocking Functions
+## Generic Future Blocking Functions ## {#wording_blocking_functions}
 
 In [**thread.syn**] and [**thread.thread.this**] add:
 
@@ -1708,7 +1754,7 @@ template<class Future>
 
 * *Returns:*
     * If `f` becomes [=ready=] with a value, moves the value from `f` and returns it
-       to the caller.
+        to the caller.
 
 * *Postconditions:* `f` is [=invalid=].
 
@@ -1718,7 +1764,7 @@ template<class Future>
 
 * *Throws:* If `f` becomes [=ready=] with an exception, that exception is rethrown.
 
-## `FutureContinuation` Helper Functions
+## `FutureContinuation` Helper Functions ## {#wording_future_continuation_helper_functions}
 
 ```
 namespace std::execution {
@@ -1735,8 +1781,6 @@ template<class F, class G>
 }
 ```
 
-### Function Template `on_value`
-
 ```
 template<class F>
   /* see below */ on_value(F&& f);
@@ -1750,14 +1794,12 @@ template<class F>
 **Returns:**
 A `FutureContinuation` object, `fc`, of implementation-defined type such that:
 
-* `fc(t)` is valid for objects `t` of type `T` and has the same effects as
+* `fc(t)` is well-formed for objects `t` of type `T` and has the same effects as
     `invoke(ff, t)`, where `ff` is an instance of `F` move-constructed from
     `forward<F>(f)`.
     The object `ff` is constructed before the return of `on_value()` and
     destroyed when `fc` is destroyed.
 * `fc(exception_arg, exception_ptr{})` is ill-formed.
-
-### Function Template `on_error`
 
 <!-- Following parallel algorithms precedent, these functions should take their template parameters by value -->
 
@@ -1772,7 +1814,7 @@ template<class F>
 
 **Returns:**
 A `FutureContinuation` object, `fc`, of implementation-defined type such that:
-* `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and
+* `fc(exception_tag, e)` is well-formed for objects `e` of type `exception_ptr` and
     has the same effects as `invoke(ff, e)`, where `ff` is an object of type
     `F` move-constructed from `forward<F>(f)`.
     The object `ff` is constructed before the return of `on_error` and
@@ -1793,11 +1835,11 @@ template<class F>
 **Returns:**
 A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
-- `fc(t)` is valid for objects `t` of type `T` and has the same effects
+- `fc(t)` is well-formed for objects `t` of type `T` and has the same effects
     as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
     argument to `on_expected()`.
     The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
-- `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
+- `fc(exception_tag, e)` is well-formed for objects `e` of type `exception_ptr` and has the same effects
     as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
     argument to `on_expected()`.
     The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
@@ -1825,32 +1867,32 @@ A `FutureContinuation` object, `fc`, of implementation-defined type such that:
     from `forward<F>(f)`.
     The object `ff` is constructed before the return of `on_value_or_error`
     and destroyed when `fc` is destroyed.
-* `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and
+* `fc(exception_tag, e)` is well-formed for objects `e` of type `exception_ptr` and
     has the same effects as `invoke(gg, e)`, where `gg` is an object of type of
     `G` move-constructed from `forward<G>(g)`. 
     The object `gg` is constructed before the return of `on_value_or_error` and
     destroyed when `fc` is destroyed.
 
-# Proposed Modifications to P0443 (Executors)
+## Proposed Modifications to Executors ## {#wording_p0443}
 
-`Future` Requirements
+### `Future` Requirements ### {#wording_p0443_future}
 
-Drop this entire section and replace with this paper.
+Remove this section.
 
-## `TwoWayExecutor` Requirements
+### `TwoWayExecutor` Requirements ### {#wording_p0443_two_way_executor}
 
 In the *Return Type* column:
 
 **Replace:**
 
 <blockquote>
-A type that satisfies the Future requirements for the value type R.
+A type that satisfies the `Future` requirements for the value type `R`.
 </blockquote>
 
 **With:**
 
 <blockquote>
-A type that satisfies the ContinuableFuture requirements for the value type `R`.
+A type that satisfies the `ContinuableFuture` requirements for the value type `R`.
 </blockquote>
 
 
@@ -1868,25 +1910,27 @@ in the associated shared state of the resulting `Future`.
 in the resulting `ContinuableFuture`.
 </blockquote>
 
-## `ThenExecutor` Requirements
+### `ThenExecutor` Requirements ### {#wording_p0443_then_executor}
 
 In the type requirements list:
 
 **Replace:**
 
 <blockquote>
-* `fut` denotes a [=future object=] satisfying the `Future` requirements,
+* `fut` denotes a future object satisfying the `Future` requirements,
+
 </blockquote>
 
 **With:**
 
 <blockquote>
-* `fut` denotes a [=future object=] that:
+* `fut` denotes a future object that:
   * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
       `x.then_execute`, or `x.bulk_then_execute` and meets the
       `ContinuableFuture` requirements.
   * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
       `execution::query(x, cancellable_promise_contract_t<T>)`.
+
 </blockquote>
 
 In the *Return Type* column:
@@ -1917,7 +1961,7 @@ in the associated shared state of the resulting `Future`.
 in the resulting `ContinuableFuture`.
 </blockquote>
 
-## `BulkTwoWayExecutor` Requirements
+### `BulkTwoWayExecutor` Requirements ### {#wording_p0443_bulk_two_way_executor}
 
 In the *Return Type* column:
 
@@ -1946,7 +1990,7 @@ in the associated shared state of the resulting `Future`.
 in the resulting `ContinuableFuture`.
 </blockquote>
 
-## `BulkThenExecutor` Requirements
+### `BulkThenExecutor` Requirements ### {#wording_p0443_bulk_then_executor}
 
 In the type requirements list:
 
@@ -1954,6 +1998,7 @@ In the type requirements list:
 
 <blockquote>
 * fut denotes a future object satisfying the Future requirements,
+
 </blockquote>
 
 **With:**
@@ -1965,6 +2010,7 @@ In the type requirements list:
       `ContinuableFuture` requirements.
   * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
       `execution::query(x, cancellable_promise_contract_t<T>)`.
+
 </blockquote>
 
 In the *Return Type* column:
@@ -1995,7 +2041,7 @@ in the associated shared state of the resulting Future.
 in the resulting ContinuableFuture.
 </blockquote>
 
-## `twoway_t` Customization Points
+### `twoway_t` Customization Points ### {#wording_p0443_twoway_t}
 
 **Replace:**
 
@@ -2009,7 +2055,7 @@ it is `std::experimental::future<T>`
 it is a `execution::continuable_future<T, E1>`
 </blockquote>
 
-##`single_t` Customization Points
+### `single_t` Customization Points ### {#wording_p0443_single_t}
 
 **Replace:**
 
@@ -2023,11 +2069,11 @@ it is `std::experimental::future<T>`
 it is `execution::continuable_future<T, E1>`
 </blockquote>
 
-## Properties To Indicate If Blocking And Directionality May Be Adapted
+### Properties To Indicate If Blocking And Directionality May Be Adapted ### {#wording_p0443_blocking_and_directionality_properties}
 
 Remove `twoway_t` from the **Requirements** column of the Table.
 
-## Class Template `executor`
+### Class Template `executor` ### {#wording_p0443_erasing_executor}
 
 **Replace:**
 
@@ -2071,7 +2117,7 @@ template<class Function, class ResultFactory, class SharedFactory>
 
 <!-- NOTE: We lose the executor information here. Potentially we should encode the future type, including its executor, in the properties of the polymorphic wrapper -->
 
-## `executor` Operations
+### `executor` Operations ### {#wording_p0443_erasing_executor_operations}
 
 **Replace:**
 
@@ -2168,7 +2214,7 @@ The returned future is [=fulfilled=] when `f1()` completes execution, with
   (if `decltype(rf1())` is void), or any exception thrown by an invocation `f1`.
 </blockquote>
 
-## `static_thread_pool` Executor Types
+### `static_thread_pool` Executor Type ### {#wording_p0443_static_thread_pool}
 
 **Replace:**
 
@@ -2213,14 +2259,4 @@ template<class Function, class ResultFactory, class SharedFactory>
 
 Replace the same instances in the documentation section below the main code block.
 </blockquote>
-
-# Appendix: Prior Work
-
-This work is unification of prior papers written individually by the authors:
-
-* [P0701r0](https://wg21.link/P0701r0)
-* [P0701r1](https://wg21.link/P0701r1)
-* [P0783r0](https://wg21.link/P0783r0)
-* [P0904r0](https://wg21.link/P0904r0)
-
 
