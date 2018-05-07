@@ -2,7 +2,7 @@
 Title: A Unified Futures Proposal for C++
 Abstract: Proposed composable future concepts that interoperate with executors.
 Shortname: P1054
-URL: wg21.link/P1054
+URL: wg21.link/P1054r0
 Revision: 0
 Audience: SG1
 Status: D
