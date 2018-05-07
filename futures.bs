@@ -231,6 +231,8 @@ This work is unification of prior papers written individually by the authors:
 Proposed New Wording
 ====================
 
+Wording supplements current text in [p0443](https://wg21.link/P0443).
+
 Future/Promise Model
 ---------------------
 
@@ -391,6 +393,185 @@ struct is_future_continuation;
 </table>
 
 </center>
+
+`Promise` requirements
+--------------------
+
+#. A `Promise` type for value type `T` and error type `E`  shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
+
+Descriptive Variable Definitions
+
+<table border=1>
+<tr>
+  <th>Variable</th>
+  <th>Definition</th>
+</tr>
+<tr>
+  <td>`T`</td>
+  <td>
+    Either:
+      * Any (possibly cv-qualified) object type that is not an array, or
+      * (possibly cv-qualified) `void`.
+  </td>
+</tr>
+<tr>
+  <td>t</td>
+  <td>a value of a type contextually convertible to `T`</td>
+</tr>
+<tr>
+  <td>`e`</td>
+  <td>a value of type contextually convertible to `exception_ptr`</td>
+</tr>
+<tr>
+  <td>`P<T>`</td>
+  <td>A [=promise=] type for value type `T`</td>
+</tr>
+<tr>
+  <td>`p`</td>
+  <td>An rvalue of type `P<T>`</td>
+</tr>
+</table>
+
+<br/>
+
+<table>
+  <tr>
+    <th>Expression</th>
+    <th>Return Type</th>
+    <th>Operational semantics</th>
+  </tr>
+  <tr>
+    <td>`promise_value_t<P<T>>`</td>
+    <td>`T`</td>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <td>`p.set_value(t)`</td>
+    <td>`void`</td>
+    <td>
+
+      * *Requires:* `!is_void_v<T>`
+      * *Effects:* Completes the promise and associated future with `t`.
+
+    </td>
+  </tr>
+  <tr>
+    <td>`p.set_value()`</td>
+    <td>`void`</td>
+    <td>
+
+      * *Requires:* `is_void_v<T>`
+      * *Effects:* Completes the promise and associated future.
+
+    </td>
+  </tr>
+  <tr>
+    <td>`p.set_exception(e)`</td>
+    <td>`void`</td>
+    <td>Completes the promise and associated future with the error `e`.</td>
+  </tr>
+  <tr>
+    <td>
+      `p.valid()`
+    </td>
+    <td>contextually convertible to `bool`</td>
+    <td>`true` if the promise has an associated future that is incomplete, `false` otherwise</td>
+  </tr>
+</table>
+
+
+### Promise contract
+
+```c++
+template <class T>
+struct promise_contract_t
+{
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type
+    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
+};
+
+template <typename T>
+inline constexpr promise_contract = promise_contract_t<T>{};
+```
+
+The `promise_contract_t` property can be used only with query.
+
+The result of a query of the `promise_contract_t` property applied to a
+`ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a `Promise`
+and an implementation-defined token type that will be interpreted as a valid
+input future by calls to `then_execute` or `bulk_then_execute` and that is
+satisfied by calling `set_value` or `set_exception` on the promise.
+
+The value returned from `execution::query(e, promise_contract_t<T>)`, where `e`
+is an executor and `T` is a type, should be unique for any given call.
+When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
+`std::pair` where first value is an instance of a type matching the `Promise`
+requirements and the second is a token type that `e` will interpret as a valid
+future parameter to calls to `then_execute` or `bulk_then_execute`.
+
+
+### Cancellable promise contract
+
+```
+template <T, C>
+struct cancellable_promise_contract_t
+{
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type
+    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
+
+  template<class Executor>
+  static constexpr decltype(auto) static_query_v
+    = Executor::query(promise_contract_t());
+
+  template<class Executor>
+    friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
+      query(const Executor& ex, const cancellable_promise_contract_t&);
+
+  CancellationCallback cancellation_callback;
+};
+```
+
+The `cancellable_promise_contract_t` property can be used only with query.
+`cancellable_promise_contract_t` differs from `promise_contract_t` in that the
+query carries a cancellation callback, `cancellation_callback`, that will be
+called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
+cancellation of the task dependent on the future resulting from the
+`cancellable_promise_contract_t` query.
+
+The result of a query of the `cancellable_promise_contract_t` property applied
+to a `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a
+`Promise` and an implementation-defined token type that will be interpreted as
+a valid input future by calls to `then_execute` or `bulk_then_execute`, that
+is satisfied by calling `set_value` or `set_exception` on the promise and that
+supports cancellation by the executor.
+
+The value returned from
+`execution::query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
+where `e` is an executor and `T` is a type, should be unique for any given call.
+When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
+`std::pair` where first value is an instance of a type matching the `Promise`
+requirements and the second is a token type that `e` will interpret as a valid
+future parameter to calls to `then_execute` or `bulk_then_execute`.
+
+```
+template<class Executor>
+  friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
+    query(const Executor& ex, const cancellable_promise_contract_t&);
+```
+ * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
+      second is a `std::standard_semi_future<T>` such that the future was retrieved
+      from the promise.
+
+ * *Remarks:* This function shall not participate in overload resolution unless
+      `executor_future_t<Executor, T>` is `std::standard_semi_future<T>`.
+
 
 `SemiFuture` Requirements
 -------------------------
@@ -1625,192 +1806,6 @@ To solve this we provide two things:
 The promise is a write-only concept. This simplifies the definition and improves flexibility.
 
 The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
-
-Proposed New Wording
-====================
-
-Wording supplements current text in [p0443](https://wg21.link/P0443).
-
-1.1.x `Promise` requirements
---------------------
-
-#. A `Promise` type for value type `T` and error type `E`  shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
-
-Descriptive Variable Definitions
-
-<table border=1>
-<tr>
-  <th>Variable</th>
-  <th>Definition</th>
-</tr>
-<tr>
-  <td>`T`</td>
-  <td>
-    Either:
-      * Any (possibly cv-qualified) object type that is not an array, or
-      * (possibly cv-qualified) `void`.
-  </td>
-</tr>
-<tr>
-  <td>t</td>
-  <td>a value of a type contextually convertible to `T`</td>
-</tr>
-<tr>
-  <td>`e`</td>
-  <td>a value of type contextually convertible to `exception_ptr`</td>
-</tr>
-<tr>
-  <td>`P<T>`</td>
-  <td>A [=promise=] type for value type `T`</td>
-</tr>
-<tr>
-  <td>`p`</td>
-  <td>An rvalue of type `P<T>`</td>
-</tr>
-</table>
-
-<br/>
-
-<table>
-  <tr>
-    <th>Expression</th>
-    <th>Return Type</th>
-    <th>Operational semantics</th>
-  </tr>
-  <tr>
-    <td>`promise_value_t<P<T>>`</td>
-    <td>`T`</td>
-    <td>
-    </td>
-  </tr>
-  <tr>
-    <td>`p.set_value(t)`</td>
-    <td>`void`</td>
-    <td>
-
-      * *Requires:* `!is_void_v<T>`
-      * *Effects:* Completes the promise and associated future with `t`.
-
-    </td>
-  </tr>
-  <tr>
-    <td>`p.set_value()`</td>
-    <td>`void`</td>
-    <td>
-
-      * *Requires:* `is_void_v<T>`
-      * *Effects:* Completes the promise and associated future.
-
-    </td>
-  </tr>
-  <tr>
-    <td>`p.set_exception(e)`</td>
-    <td>`void`</td>
-    <td>Completes the promise and associated future with the error `e`.</td>
-  </tr>
-  <tr>
-    <td>
-      `p.valid()`
-    </td>
-    <td>contextually convertible to `bool`</td>
-    <td>`true` if the promise has an associated future that is incomplete, `false` otherwise</td>
-  </tr>
-</table>
-
-
-1.3.3.2 Promise contract
---------------------
-
-```c++
-template <class T>
-struct promise_contract_t
-{
-  static constexpr bool is_requirable = false;
-  static constexpr bool is_preferable = false;
-
-  using polymorphic_query_result_type
-    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
-};
-
-template <typename T>
-inline constexpr promise_contract = promise_contract_t<T>{};
-```
-
-The `promise_contract_t` property can be used only with query.
-
-The result of a query of the `promise_contract_t` property applied to a
-`ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a `Promise`
-and an implementation-defined token type that will be interpreted as a valid
-input future by calls to `then_execute` or `bulk_then_execute` and that is
-satisfied by calling `set_value` or `set_exception` on the promise.
-
-The value returned from `execution::query(e, promise_contract_t<T>)`, where `e`
-is an executor and `T` is a type, should be unique for any given call.
-When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
-`std::pair` where first value is an instance of a type matching the `Promise`
-requirements and the second is a token type that `e` will interpret as a valid
-future parameter to calls to `then_execute` or `bulk_then_execute`.
-
-
-1.3.3.2 Cancellable promise contract
---------------------
-
-```
-template <T, C>
-struct cancellable_promise_contract_t
-{
-  static constexpr bool is_requirable = false;
-  static constexpr bool is_preferable = false;
-
-  using polymorphic_query_result_type
-    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
-
-  template<class Executor>
-  static constexpr decltype(auto) static_query_v
-    = Executor::query(promise_contract_t());
-
-  template<class Executor>
-    friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
-      query(const Executor& ex, const cancellable_promise_contract_t&);
-
-  CancellationCallback cancellation_callback;
-};
-```
-
-The `cancellable_promise_contract_t` property can be used only with query.
-`cancellable_promise_contract_t` differs from `promise_contract_t` in that the
-query carries a cancellation callback, `cancellation_callback`, that will be
-called as `std::invoke(cancellation_callback)` by the `ThenExecutor` on
-cancellation of the task dependent on the future resulting from the
-`cancellable_promise_contract_t` query.
-
-The result of a query of the `cancellable_promise_contract_t` property applied
-to a `ThenExecutor` or `BulkThenExecutor` is a `std::pair` consisting of a
-`Promise` and an implementation-defined token type that will be interpreted as
-a valid input future by calls to `then_execute` or `bulk_then_execute`, that
-is satisfied by calling `set_value` or `set_exception` on the promise and that
-supports cancellation by the executor.
-
-The value returned from
-`execution::query(e, cancellable_promise_contract_t<T>{cancellation_callback})`,
-where `e` is an executor and `T` is a type, should be unique for any given call.
-When `e` is a `ThenExecutor` or `BulkThenExecutor` the result of the query is a
-`std::pair` where first value is an instance of a type matching the `Promise`
-requirements and the second is a token type that `e` will interpret as a valid
-future parameter to calls to `then_execute` or `bulk_then_execute`.
-
-```
-template<class Executor>
-  friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
-    query(const Executor& ex, const cancellable_promise_contract_t&);
-```
- * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
-      second is a `std::standard_semi_future<T>` such that the future was retrieved
-      from the promise.
-
- * *Remarks:* This function shall not participate in overload resolution unless
-      `executor_future_t<Executor, T>` is `std::standard_semi_future<T>`.
-
 
 Proposed Modifications to Executors P0443
 =============================
