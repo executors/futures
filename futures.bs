@@ -1429,7 +1429,7 @@ template<class Future>
   void future_wait(Future& f) noexcept;
 ```
 
- * *Requires:* `decay_t<Future>` meets the requirements of `SemiFuture`
+ * *Requires:* `Future` meets the requirements of `SemiFuture`
 
  * *Effects:* Blocks the calling thread until `f` becomes ready.
 
@@ -1453,15 +1453,14 @@ namespace std {
 To [thread.thread.this] add:
 ```
 template<class Future>
-  future_value_t<decay_t<Future>>
-  future_get(Future&& f);
+  future_value_t<decay_t<Future>> future_get(Future&& f);
 ```
  * *Requires:*
    - `decay_t<Future>` meets the requirements of `SemiFuture`
    - `!is_reference_v<Future>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
 
  * *Effects:*
-    - `wait()`s until `f` is [=ready=]
+    - blocks the calling thread until `f` becomes ready
     - retrieves the [=asynchronous result=]
 
  * *Returns:*
