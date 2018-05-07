@@ -150,7 +150,6 @@ There is a strict separation of control here between `caller` and `async_api`.
 
 **TODO: Explain future model.**
 
-**TODO: Explain cancellation.**
 
 In a change to the model used in `std::future`, where `std::future::get()` is a
 consuming operation but is l-value qualified, consuming operations in this
@@ -180,6 +179,28 @@ auto f2 = std::move(f).then([](T val){return val;}).then([](T2 val){return val;}
 but this is a minor inconvenience given that it allows the tooling to warn on
 use-after-move and related misuses.
 
+The Cancellation Model
+--------------------
+
+This paper proposes a way to hook a [=cancellation notifier=] into a future/promise pair, using `cancellable_promise_contract_t`.
+It allows for authors of future types to support cancellation if they want to, and to correctly hook into the cancellation mechanisms
+of other futures they interoperate with - such as inside `.via`, where the implementation can create a future/promise pair that will,
+on cancellation, invoke a function that will cancel the current future.
+
+A sample implementation of `.via` could be as follows:
+```
+template <typename Executor>
+auto via(Executor && ex) &&
+{
+    auto cancel = [this]{ handle_cancellation(); };
+    auto [promise, future] = execution::query(ex, cancellable_promise_contract_t{ cancel });
+    then([promise = std::move(promise)](auto value) { promise.set_value(std::move(value)); });
+    return future;
+}
+```
+
+We are currently not proposing a concrete cancellation API; we plan to do that in a future revision of the paper. At this time, there is
+no guarantee that a future honors a [=cancellation notifier=], and no requirements as to when it actually invokes it.
 
 The Error Model
 --------------------
