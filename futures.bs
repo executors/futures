@@ -228,6 +228,58 @@ This work is unification of prior papers written individually by the authors:
 * [P0783r0](https://wg21.link/P0783r0)
 * [P0904r0](https://wg21.link/P0904r0)
 
+Proposed Addition to Executors P0443
+=============================
+
+[p0443](https://wg21.link/P0443) defines a collection of executor types intended
+for use managing the execution of tasks on resources.
+There are three fundamental executor categories that cover directionality and
+control of launch:
+ * one-way
+ * two-way
+ * then
+
+The first two could be considered *immediately launched*. That is that once
+handed to the executor, they may start immediately, assuming the internal
+executor policies and resources allow it. This makes them very useful for
+lazy-launch scenarios.
+
+Lazy launch scenarios are common in callback-based code, and in a wide range of
+future library implementations such as
+[folly](https://github.com/facebook/folly/tree/master/folly/futures).
+In these designs, a callback is executed on completion of some asynchronous
+work, and that callback enqueues work into the executor.
+This means that work is enqueued only after all dependencies are satisfied.
+
+Then-executors, on the other hand, are intended for explicitly deferred work.
+Work can be handed to the executor dependent on prior work, before that prior
+work is completed.
+This design is fundamentally different, but offers scope for optimization by
+the executor of chains of dependencies that it can batch, without running
+additional code on completion of each.
+
+The current executor design is intentionally generic - it makes few requirements
+on the future types it can use as input dependencies for the `then_execute` and
+`bulk_then_execute` operations.
+We can assume that for a future returned by a previous call to `then_execute`
+or `bulk_then_execute`, the executor understands the implementation of the
+future can can perform whatever dependence tracking and optimization necessary.
+This then is an implementation detail.
+
+However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
+This amounts to a standard API for triggering deferred work.
+
+Proposed solution
+-------------------
+
+To solve this we provide two things:
+ * A promise concept, that allows setting of value and/or exception.
+ * A mechanism to retrieve from an executor a pair of a promise and a future, such that the future is a valid input dependence for a call to `then_execute` or `bulk_then_execute`.
+
+The promise is a write-only concept. This simplifies the definition and improves flexibility.
+
+The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
+
 Proposed New Wording
 ====================
 
@@ -1754,58 +1806,6 @@ following operational semantics:
     The object `gg` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
 
 
-
-Proposed Addition to Executors P0443
-=============================
-
-[p0443](https://wg21.link/P0443) defines a collection of executor types intended
-for use managing the execution of tasks on resources.
-There are three fundamental executor categories that cover directionality and
-control of launch:
- * one-way
- * two-way
- * then
-
-The first two could be considered *immediately launched*. That is that once
-handed to the executor, they may start immediately, assuming the internal
-executor policies and resources allow it. This makes them very useful for
-lazy-launch scenarios.
-
-Lazy launch scenarios are common in callback-based code, and in a wide range of
-future library implementations such as
-[folly](https://github.com/facebook/folly/tree/master/folly/futures).
-In these designs, a callback is executed on completion of some asynchronous
-work, and that callback enqueues work into the executor.
-This means that work is enqueued only after all dependencies are satisfied.
-
-Then-executors, on the other hand, are intended for explicitly deferred work.
-Work can be handed to the executor dependent on prior work, before that prior
-work is completed.
-This design is fundamentally different, but offers scope for optimization by
-the executor of chains of dependencies that it can batch, without running
-additional code on completion of each.
-
-The current executor design is intentionally generic - it makes few requirements
-on the future types it can use as input dependencies for the `then_execute` and
-`bulk_then_execute` operations.
-We can assume that for a future returned by a previous call to `then_execute`
-or `bulk_then_execute`, the executor understands the implementation of the
-future can can perform whatever dependence tracking and optimization necessary.
-This then is an implementation detail.
-
-However, there will also be interactions where a task to run on one executor is dependent on one produced by another. For this to be practical, we need a standardised mechanism to tie the two executors together.
-This amounts to a standard API for triggering deferred work.
-
-Proposed solution
--------------------
-
-To solve this we provide two things:
- * A promise concept, that allows setting of value and/or exception.
- * A mechanism to retrieve from an executor a pair of a promise and a future, such that the future is a valid input dependence for a call to `then_execute` or `bulk_then_execute`.
-
-The promise is a write-only concept. This simplifies the definition and improves flexibility.
-
-The future is not a full future in the sense of future concepts. It is merely a token that completes when the promise is satisfied. This means that it is useful only for connecting to `then_execute` or `bulk_then_execute` on the executor that provided the result.
 
 Proposed Modifications to Executors P0443
 =============================
