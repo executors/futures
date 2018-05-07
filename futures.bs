@@ -129,8 +129,8 @@ work onto a known executor, and protecting the API from misuse.
 
 As a simple example:
 ```
-std::standard_semi_future<DataType> async_api() {
-  std::standard_continuable_future<APIExecutor, SerializedDataType> =
+std::execution::semi_future<DataType> async_api() {
+  std::execution::continuable_future<APIExecutor, SerializedDataType> =
     doAsyncWork();
   return std::move(f).then(
     [](SerializedDataType&& val){return deserialize(val);});
@@ -365,7 +365,7 @@ Future/Promise Model
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
 ```
-namespace std {
+namespace std::execution {
 
 struct exception_arg_t { explicit exception_arg_t() = default; };
 
@@ -545,7 +545,7 @@ struct promise_contract_t
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type
-    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
+    = std::pair<std::execution::promise<T>, std::execution::semi_future<T>>;
 };
 
 template <typename T>
@@ -578,14 +578,14 @@ struct cancellable_promise_contract_t
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type
-    = std::pair<std::standard_promise<T>, std::standard_semi_future<T>>;
+    = std::pair<std::execution::promise<T>, std::execution::semi_future<T>>;
 
   template<class Executor>
   static constexpr decltype(auto) static_query_v
     = Executor::query(promise_contract_t());
 
   template<class Executor>
-    friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
+    friend std::pair<std::execution::promise<T>, std::execution::semi_future<T>>
       query(const Executor& ex, const cancellable_promise_contract_t&);
 
   CancellationCallback cancellation_callback;
@@ -616,15 +616,15 @@ future parameter to calls to `then_execute` or `bulk_then_execute`.
 
 ```
 template<class Executor>
-  friend std::pair<std::standard_promise<T>, std::standard_semi_future<T>>
+  friend std::pair<std::execution::promise<T>, std::execution::semi_future<T>>
     query(const Executor& ex, const cancellable_promise_contract_t&);
 ```
- * *Returns:* A `std::pair` where the first value is a `std::promise<T>` and the
-      second is a `std::standard_semi_future<T>` such that the future was retrieved
+ * *Returns:* A `std::pair` where the first value is a `std::execution::promise<T>` and the
+      second is a `std::execution::semi_future<T>` such that the future was retrieved
       from the promise.
 
  * *Remarks:* This function shall not participate in overload resolution unless
-      `executor_future_t<Executor, T>` is `std::standard_semi_future<T>`.
+      `executor_future_t<Executor, T>` is `std::execution::semi_future<T>`.
 
 
 `SemiFuture` Requirements
@@ -678,7 +678,7 @@ template<class Executor>
   <td>
     A `ContinuableFuture` type for value type `T` and executor type `E`, either:
     * `decltype(execution::query(e, promise_contract_t<T>()).second)` if `E` is a `ThenExecutor` and `execution::can_query_v<E, promise_contract_t<T>> == true`, or
-    * `standard_continuable_future<T>` otherwise.
+    * `continuable_future<T>` otherwise.
   </td>
 </tr>
 </table>
@@ -1010,19 +1010,19 @@ Descriptive Variable Definitions
 
 </center>
 
-`std::standard_promise`
+`std::execution::promise`
 -----------------------
 
 ```c++
 template <class T>
-class standard_promise {
+class promise {
 public:
     using value_type = T;
 
-    standard_promise() noexcept;
-    standard_promise(standard_promise&&) noexcept;
+    promise() noexcept;
+    promise(promise&&) noexcept;
     template <typename Promise>
-    explicit standard_promise(Promise&& p);
+    explicit promise(Promise&& p);
 
     void set_value(/* see below */) &&;
     
@@ -1034,15 +1034,15 @@ public:
 };
 ```
 
-A `standard_promise` refers to a [=promise=] and is associated with a [=future=], either through type-erasure or through construction of an underlying [=promise=] with an overload of `make_promise_contract()`.
+A `promise` refers to a [=promise=] and is associated with a [=future=], either through type-erasure or through construction of an underlying [=promise=] with an overload of `make_promise_contract()`.
 
 <br/>
 
 ```
-standard_promise() noexcept;
+promise() noexcept;
 ```
 
- * *Effects:* Constructs a `standard_promise` object that does not refer to a [=promise=]
+ * *Effects:* Constructs a `promise` object that does not refer to a [=promise=]
 
  * *Postconditions:*
      * `valid() == false`.
@@ -1050,10 +1050,10 @@ standard_promise() noexcept;
 <br/>
 
 ```
-standard_promise(standard_promise&& rhs) noexcept;
+promise(promise&& rhs) noexcept;
 ```
 
- * *Effects:*  Move constructs a `standard_promise` object from `rhs` that refers
+ * *Effects:*  Move constructs a `promise` object from `rhs` that refers
        to the same [=promise=] and is associated with the same [=future=]
        (if `rhs` refers to a [=promise=]).
 
@@ -1066,14 +1066,14 @@ standard_promise(standard_promise&& rhs) noexcept;
 
 ```
 template <class Promise>
-standard_promise(Promise&& rhs) noexcept;
+promise(Promise&& rhs) noexcept;
 ```
  * *Requires:*
    - `Promise` meets the requirements for `Promise<value_type>`
-   - `!is_same_v<decay_t<Promise>, standard_promise>`
+   - `!is_same_v<decay_t<Promise>, promise>`
    - `!is_reference_v<Promise>` *Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
 
- * *Effects:*  Constructs a `standard_promise` object that refers to the [=promise=] `rhs` and is associated with the same [=future=] as `rhs`.
+ * *Effects:*  Constructs a `promise` object that refers to the [=promise=] `rhs` and is associated with the same [=future=] as `rhs`.
        (if `rhs` is associated with a [=future=]).
 
  * *Postconditions:*
@@ -1084,16 +1084,16 @@ standard_promise(Promise&& rhs) noexcept;
 
 
 ```
-void standard_promise::set_value(const T& val) &&;
-void standard_promise::set_value(T&& val) &&;
-void standard_promise<void>::set_value() &&;
+void promise::set_value(const T& val) &&;
+void promise::set_value(T&& val) &&;
+void promise<void>::set_value() &&;
 ```
  * *Effects:*
 
   - If `valid() == true`,
-    - For `standard_promise::set_value(const T& val) &&`: equivalent to calling `set_value(val)` on the [=promise=] that `*this` refers to.
-    - For `standard_promise::set_value(T&& val) &&`: equivalent to calling `set_value(std::move(val))` on the [=promise=] that `*this` refers to.
-    - For `standard_promise<void>::set_value() &&`: equivalent to calling `set_value()` on the [=promise=] that `*this` refers to.
+    - For `promise::set_value(const T& val) &&`: equivalent to calling `set_value(val)` on the [=promise=] that `*this` refers to.
+    - For `promise::set_value(T&& val) &&`: equivalent to calling `set_value(std::move(val))` on the [=promise=] that `*this` refers to.
+    - For `promise<void>::set_value() &&`: equivalent to calling `set_value()` on the [=promise=] that `*this` refers to.
   - Otherwise, throws
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
@@ -1101,7 +1101,7 @@ void standard_promise<void>::set_value() &&;
  * *Postconditions:* 
    - `valid() == false`
 
- * *Notes:* `standard_promise::set_value(const T& val) &&` does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
+ * *Notes:* `promise::set_value(const T& val) &&` does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
 
 <br/>
 
@@ -1130,35 +1130,35 @@ explicit operator bool() const noexcept;
 
   * *Returns:* `true` if `*this` refers to a [=promise=] and the referenced promise is `valid()`, or `false` otherwise
 
-`std::standard_semi_future`
+`std::execution::semi_future`
 ---------------------------
 
 ```
 template<class T>
-class standard_semi_future {
+class semi_future {
 public:
     using value_type = T;
 
-    standard_semi_future(standard_semi_future&&) = default;
-    standard_semi_future(const standard_semi_future&) = delete;
+    semi_future(semi_future&&) = default;
+    semi_future(const semi_future&) = delete;
 
-    standard_semi_future& operator=(const standard_semi_future&) = delete;
-    standard_semi_future& operator=(standard_semi_future&&) = default;
-
-    template<class E>
-    explicit standard_semi_future(standard_continuable_future<T, E>&&);
+    semi_future& operator=(const semi_future&) = delete;
+    semi_future& operator=(semi_future&&) = default;
 
     template<class E>
-    explicit standard_semi_future(standard_shared_future<T, E>&&);
+    explicit semi_future(continuable_future<T, E>&&);
+
+    template<class E>
+    explicit semi_future(shared_future<T, E>&&);
 
     template<class EI>
-    standard_continuable_future<T, EI> via(EI) &&;
+    continuable_future<T, EI> via(EI) &&;
 };
 ```
 
 <br/>
 ```
-standard_continuable_future(standard_semi_future&& rhs);
+continuable_future(semi_future&& rhs);
 ```
 
  * *Effects:*  Move constructs a future object from `rhs` that refers to the
@@ -1173,7 +1173,7 @@ standard_continuable_future(standard_semi_future&& rhs);
 
 <br/>
 ```
-standard_semi_future(const standard_semi_future& rhs);
+semi_future(const semi_future& rhs);
 ```
 
  * *Effects:* Copy constructs a future object from `rhs` that refers to the
@@ -1186,7 +1186,7 @@ standard_semi_future(const standard_semi_future& rhs);
 <br/>
 ```
 template<class E>
-standard_semi_future(standard_continuable_future<T, E>&& rhs);
+semi_future(continuable_future<T, E>&& rhs);
 ```
 
 * *Effects:* Move constructs a future object from `rhs` that refers to the
@@ -1201,10 +1201,10 @@ standard_semi_future(standard_continuable_future<T, E>&& rhs);
 <br/>
 ```
 template<class E>
-explicit standard_semi_future(standard_shared_future<T, E>&& rhs);
+explicit semi_future(shared_future<T, E>&& rhs);
 
 template<class E>
-explicit standard_semi_future(const standard_shared_future<T, E>& rhs);
+explicit semi_future(const shared_future<T, E>& rhs);
 ```
 
  * *Effects:* Move constructs a future object from `rhs` that refers to the
@@ -1218,13 +1218,13 @@ explicit standard_semi_future(const standard_shared_future<T, E>& rhs);
 
 <br/>
 ```
-standard_continuable_future<T, EI> via(EI ex) &&;
+continuable_future<T, EI> via(EI ex) &&;
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
     on which continuations will be enqueued to a new executor.
 
- * *Returns:* A standard_continuable_future modified to carry executor ex of
+ * *Returns:* A continuable_future modified to carry executor ex of
     type EI.
 
  * *Requires:*
@@ -1243,37 +1243,37 @@ bool valid() const noexcept;
 
  * *Returns:* Returns true if this is a valid future. False otherwise.
 
-`std::standard_continuable_future`
+`std::execution::continuable_future`
 ----------------------------------
 
 ```
 template<class T, class E>
-class standard_continuable_future {
+class continuable_future {
 public:
     using value_type = T;
     using executor_type = Ex;
-    using semi_future_type = standard_semi_future<T>;
+    using semi_future_type = semi_future<T>;
 
-    standard_continuable_future(const standard_continuable_future&) = delete;
-    standard_continuable_future(standard_continuable_future&&) = default;
+    continuable_future(const continuable_future&) = delete;
+    continuable_future(continuable_future&&) = default;
 
-    standard_continuable_future& operator=(const standard_continuable_future&) = delete;
-    standard_continuable_future& operator=(standard_continuable_future&&) = default;
+    continuable_future& operator=(const continuable_future&) = delete;
+    continuable_future& operator=(continuable_future&&) = default;
 
     template<class E>
-    explicit standard_continuable_future(standard_shared_future<T, E>&&);
+    explicit continuable_future(shared_future<T, E>&&);
     template<class E>
-    explicit standard_continuable_future(const standard_shared_future<T, E>&);
+    explicit continuable_future(const shared_future<T, E>&);
 
     template<class ReturnFuture, class F>
     ReturnFuture then(FutureContinuation&&) &&;
 
     template<class EI>
-    standard_continuable_future<T, EI> via(EI) &&;
+    continuable_future<T, EI> via(EI) &&;
 
     E get_executor() const;
-    standard_semi_future<T> semi() &&;
-    standard_shared_future<T, E> share() &&;
+    semi_future<T> semi() &&;
+    shared_future<T, E> share() &&;
 
     bool valid() const
 }
@@ -1282,7 +1282,7 @@ public:
 
 <br/>
 ```
-standard_continuable_future(standard_continuable_future&& rhs);
+continuable_future(continuable_future&& rhs);
 ```
 
  * *Effects:* Move constructs a future object from `rhs` that refers to the
@@ -1296,7 +1296,7 @@ standard_continuable_future(standard_continuable_future&& rhs);
 
 <br/>
 ```
-standard_continuable_future(const standard_continuable_future& rhs);
+continuable_future(const continuable_future& rhs);
 ```
 
  * *Effects:* Copy constructs a future object from `rhs` that refers to the
@@ -1309,7 +1309,7 @@ standard_continuable_future(const standard_continuable_future& rhs);
 <br/>
 ```
 template<class E>
-explicit standard_continuable_future(standard_shared_future<T, E>&& rhs);
+explicit continuable_future(shared_future<T, E>&& rhs);
 ```
 
  * *Effects:* Move constructs a future object from `rhs` that refers to the
@@ -1324,7 +1324,7 @@ explicit standard_continuable_future(standard_shared_future<T, E>&& rhs);
 <br/>
 ```
 template<class E>
-explicit standard_continuable_future(const standard_shared_future<T, E>& rhs);
+explicit continuable_future(const shared_future<T, E>& rhs);
 ```
 
  * *Effects:* Copy constructs a future object from `rhs` that refers to the
@@ -1389,13 +1389,13 @@ ReturnFuture then(F&&) &&;
 
 <br/>
 ```
-standard_continuable_future<T, EI> via(EI ex) &&;
+continuable_future<T, EI> via(EI ex) &&;
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
     on which continuations will be enqueued to a new executor.
 
- * *Returns:* A standard_continuable_future modified to carry executor ex of
+ * *Returns:* A continuable_future modified to carry executor ex of
     type EI.
 
  * *Requires:*
@@ -1416,12 +1416,12 @@ E get_executor() const;
 
 <br/>
 ```
-standard_semi_future<T> semi() &&;
+semi_future<T> semi() &&;
 ```
  * *Returns:*
-    Returns a standard_semi_future of the same value type as \*this and that
+    Returns a semi_future of the same value type as \*this and that
     completes when this completes, but that erases the executor. is_valid() on the
-    returned standard_semi_future will return the same value as is_valid() on
+    returned semi_future will return the same value as is_valid() on
     \*this.
 
 <br/>
@@ -1433,10 +1433,10 @@ bool valid() const noexcept;
 
 <br/>
 ```
-standard_shared_future<T, E> share() &&;
+shared_future<T, E> share() &&;
 ```
 
- * *Returns:* standard_shared_future<R>(std::move(\*this)).
+ * *Returns:* shared_future<R>(std::move(\*this)).
 
  * *Postconditions:* valid() == false.
 
@@ -1444,35 +1444,35 @@ standard_shared_future<T, E> share() &&;
 
 
 
-`std::standard_shared_future`
+`std::execution::shared_future`
 ----------------------------------
 
 ```
 namespace std {
   template<class T, class E>
-  class standard_shared_future {
+  class shared_future {
   public:
       using value_type = T;
       using executor_type = Ex;
-      using semi_future_type = standard_semi_future<T>;
+      using semi_future_type = semi_future<T>;
 
-      standard_shared_future(const standard_shared_future&) = default;
-      standard_shared_future(standard_shared_future&&) = default;
+      shared_future(const shared_future&) = default;
+      shared_future(shared_future&&) = default;
 
-      standard_shared_future& operator=(const standard_shared_future&) = default
-      standard_shared_future& operator=(standard_shared_future&&) = default;
+      shared_future& operator=(const shared_future&) = default
+      shared_future& operator=(shared_future&&) = default;
 
       template<class E>
-      explicit standard_shared_future(standard_continuable_future<T, E>&&);
+      explicit shared_future(continuable_future<T, E>&&);
 
       template<class ReturnFuture, class F>
       ReturnFuture then(FutureContinuation&&);
 
       template<class EI>
-      standard_shared_future<T, EI> via(EI);
+      shared_future<T, EI> via(EI);
 
       E get_executor() const;
-      standard_semi_future<T> semi();
+      semi_future<T> semi();
 
       bool valid() const;
   }
@@ -1482,7 +1482,7 @@ namespace std {
 
 <br/>
 ```
-standard_shared_future(standard_shared_future&& rhs);
+shared_future(shared_future&& rhs);
 ```
 
  * *Effects:*  Move constructs a future object that refers to the shared state that
@@ -1494,7 +1494,7 @@ standard_shared_future(standard_shared_future&& rhs);
 
 <br/>
 ```
-standard_shared_future(const standard_shared_future& rhs);
+shared_future(const shared_future& rhs);
 ```
 
  * *Effects:* Copy constructs a future object that refers to the shared state that was originally referred to by rhs (if any).
@@ -1503,7 +1503,7 @@ standard_shared_future(const standard_shared_future& rhs);
 
 <br/>
 ```
-explicit standard_shared_future(standard_continuable_future&& rhs);
+explicit shared_future(continuable_future&& rhs);
 ```
 
  * *Effects:* Move constructs a future object that refers to the shared state that
@@ -1568,13 +1568,13 @@ ReturnFuture then(F&&);
 
 <br/>
 ```
-standard_shared_future<T, EI> via(EI ex);
+shared_future<T, EI> via(EI ex);
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
       on which continuations will be enqueued to a new executor.
 
- * *Returns:* A standard_shared_future modified to carry executor ex of type EI.
+ * *Returns:* A shared_future modified to carry executor ex of type EI.
 
  * *Requires:*
    * `e` is a `ThenExecutor` where `INVOKE(e, [](T){}, execution::query(e, promise_contract_t<T>).second)` or `INVOKE(e, [](T&){}, execution::query(e, promise_contract_t<T>).second)` is valid.
@@ -1591,12 +1591,12 @@ E get_executor() const;
 
 <br/>
 ```
-standard_semi_future<T> semi();
+semi_future<T> semi();
 ```
  * *Returns:*
-      Returns a standard_semi_future of the same value type as \*this and that
+      Returns a semi_future of the same value type as \*this and that
       completes when this completes, but that erases the executor. is_valid() on the
-      returned standard_semi_future will return the same value as is_valid() on
+      returned semi_future will return the same value as is_valid() on
       \*this.
 
 <br/>
@@ -1606,7 +1606,7 @@ bool valid() const noexcept;
  * *Returns:* Returns true if this is a valid future. False otherwise.
 
 
-`std::make_promise_contract`
+`std::execution::make_promise_contract`
 ----------------------------
 
 ```c++
@@ -1623,26 +1623,26 @@ make_promise_contract(const Executor& ex)
 
 ```c++
 template <class T, class Executor>
-pair<standard_promise<T>, standard_continuable_future<T, decay_t<Executor>>
+pair<promise<T>, continuable_future<T, decay_t<Executor>>
 make_promise_contract(const Executor& ex)
   requires execution::is_one_way_executor_v<Executor>
 ```
 
   * *Returns:* A pair of:
-    * a `standard_promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
-    * a `standard_continuable_future` that is associated with the [=promise=] and is bound to `ex`.
+    * a `promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
+    * a `continuable_future` that is associated with the [=promise=] and is bound to `ex`.
 
 <br/>
 
 ```c++
 template <class T>
-pair<standard_promise<T>, standard_semi_future<T>>
+pair<promise<T>, semi_future<T>>
 make_promise_contract()
 ```
 
   * *Returns:* A pair of:
-    * a `standard_promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
-    * a `standard_semi_future` that is associated with the [=promise=].
+    * a `promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
+    * a `semi_future` that is associated with the [=promise=].
 
 
 `std::this_thread::future_wait`
@@ -1945,7 +1945,7 @@ twoway_t customization points
 
 **with:**
 
-    it is `std::standard_continuable_future<T, E1>` such that a call to
+    it is `std::execution::continuable_future<T, E1>` such that a call to
    `get_executor()` returns a copy of `e1`
 
 
@@ -1957,7 +1957,7 @@ single_t customization points
 
 **with:**
 
-    it is `std::standard_continuable_future<T, E1>` such that a call to
+    it is `std::execution::continuable_future<T, E1>` such that a call to
     `get_executor()` returns a copy of `e1`
 
 
@@ -1983,7 +1983,7 @@ Class template executor
 **With:**
 ```
   template<class Function>
-    std::standard_semi_future<result_of_t<decay_t<Function>()>>
+    std::execution::semi_future<result_of_t<decay_t<Function>()>>
       twoway_execute(Function&& f) const
 ```
 
@@ -1997,7 +1997,7 @@ Class template executor
 **With:**
 ```
   template<class Function, class ResultFactory, class SharedFactory>
-    std::standard_semi_future<result_of_t<decay_t<ResultFactory>()>>
+    std::execution::semi_future<result_of_t<decay_t<ResultFactory>()>>
       bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
 ```
 
@@ -2045,10 +2045,11 @@ result of `f1()` if `decltype(f1())` is non-void, void completion if
 
 
 **Replace:**
-
+```
 template<class Function, class ResultFactory, class SharedFactory>
   std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
     void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
 
 
 **With:**
@@ -2102,18 +2103,18 @@ static_thread_pool executor types
 **With:**
 ```
   template<class Function>
-    std::standard_continuable_future<result_of_t<decay_t<Function>()>, C>
+    std::execution::continuable_future<result_of_t<decay_t<Function>()>, C>
       twoway_execute(Function&& f) const
 
   template<class Function, class Future>
-    std::standard_continuable_future<result_of_t<decay_t<Function>(decay_t<Future>)>, C>
+    std::execution::continuable_future<result_of_t<decay_t<Function>(decay_t<Future>)>, C>
       then_execute(Function&& f, Future&& pred) const;
 
   template<class Function, class SharedFactory>
     void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
 
   template<class Function, class ResultFactory, class SharedFactory>
-    std::standard_continuable_future<result_of_t<decay_t<ResultFactory>()>>, C>
+    std::execution::continuable_future<result_of_t<decay_t<ResultFactory>()>>, C>
       void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const
 ```
 
