@@ -204,7 +204,7 @@ Note that if both overloads are defined, `decltype(G(exception_arg, err))` shall
 FAQ
 ---
 
-**Q: Where is `.get` and `.wait`?**
+<i>Q: Where is `.get` and `.wait`?</i>
 
 *A:*
 Remember, the future concepts in this paper are intended to express the minimal requirements for executors interoperation and composition.
@@ -290,72 +290,72 @@ Future/Promise Model
 
 <!-- Based on [futures.state] -->
 
-#.  A <dfn>future</dfn> is an object that executes, on a executor, <dfn>continuations</dfn> that are passed an [=asynchronous result=] as a parameter.
+1.  A <dfn>future</dfn> is an object that executes, on a executor, <dfn>continuations</dfn> that are passed an [=asynchronous result=] as a parameter.
 
   * A <dfn>uniquely owned future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
   * A <dfn>non-uniquely owned future</dfn> copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
 
-#.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multipl
-#. The <dfn>status</dfn> of a [=future=]:
+2.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multipl
+3. The <dfn>status</dfn> of a [=future=]:
 
   * Is either <dfn>ready</dfn>, <dfn>not ready</dfn>, or <dfn>invalid</dfn>.
   * Shall be [=ready=] if and only if the [=future promise pairs=] [=content=] holds a value or an exception ready for retrieval.
 
-#.  An <dfn>asynchronous result</dfn> is either a value or an exception. The [=result=] is created by the [=promise=] and accessed by the [=future=].
+4.  An <dfn>asynchronous result</dfn> is either a value or an exception. The [=result=] is created by the [=promise=] and accessed by the [=future=].
 
-#.  A [=future=] may optionally have a <dfn>cancellation notifier</dfn>, which is a nullary <a href="eel.is/c++draft/func.def">callable object</a>.
+5.  A [=future=] may optionally have a <dfn>cancellation notifier</dfn>, which is a nullary <a href="eel.is/c++draft/func.def">callable object</a>.
 
-#.  When a [=future=] is <dfn data-lt="cancellation|cancel|cancels|cancelled">cancelled</dfn>:
+6.  When a [=future=] is <dfn data-lt="cancellation|cancel|cancels|cancelled">cancelled</dfn>:
 
   * If the [=future=] has a [=cancellation notifier=], it is called in the calling thread.
   * Then, the [=future's=] status is set to [=invalid=].
 
-#.  When a [=continuation=] is <dfn data-lt="attachment|attach|attaches|attached">attached</dfn> to a [=future=]:
+7.  When a [=continuation=] is <dfn data-lt="attachment|attach|attaches|attached">attached</dfn> to a [=future=]:
 
   * First, the [=status=] of its [=future=] is checked.
   * Then,
-    * If the [=status=] is [=ready=] or [=not ready=]:
-      * The [=continuation=] is enqueued for execution pending readiness of [=future=] on the [=future's=] executor, with the [=asynchronous result=] as its parameter.
-      * Finally, if the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=].
-    * If the [=status=] is [=invalid=], the behavior is unspecified.
+      * If the [=status=] is [=ready=] or [=not ready=]:
+          * The [=continuation=] is enqueued for execution pending readiness of [=future=] on the [=future's=] executor, with the [=asynchronous result=] as its parameter.
+          * Finally, if the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=].
+      * If the [=status=] is [=invalid=], the behavior is unspecified.
 
-#.  When a [=promise=] <dfn data-lt="fulfillment|fulfill|fulfills|fulfilled">fulfills</dfn> its associated [=future=] with a value or error, if the lifetime of the [=future=] has not ended:
+8.  When a [=promise=] <dfn data-lt="fulfillment|fulfill|fulfills|fulfilled">fulfills</dfn> its associated [=future=] with a value or error, if the lifetime of the [=future=] has not ended:
 
   * First, the [=status=] of its [=future=] is checked.
   * Then,
-    * If the [=status=] is [=not ready=]:
-      * If the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=]. Otherwise, the [=status=] is set to [=ready=]
-      * Finally, any execution agents that are blocking until the [=status=] is [=ready=] are unblocked.
-    * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
+      * If the [=status=] is [=not ready=]:
+          * If the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=]. Otherwise, the [=status=] is set to [=ready=]
+          * Finally, any execution agents that are blocking until the [=status=] is [=ready=] are unblocked.
+      * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
 
-If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
+    If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
 
-#. [=Fulfillment=] of a [=future=] synchronizes with execution of [=continuations=] that were enqueued for execution by that [=future=].
+9. [=Fulfillment=] of a [=future=] synchronizes with execution of [=continuations=] that were enqueued for execution by that [=future=].
 
-#. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
+10. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
       [ *Note:* The [=future=] may move (if it is a [=uniquely owned future=]) or copy (if it is a [=non-uniquely owned future=]) from the result into a new object to ensure this behavior. - *End Note* ]
       [ *Note:* The [=future=] may move from [=continuations=] into new object to ensure this behavior. - *End Note* ]
 
-#.  The lifetime of the [=continuations=] and the [=asynchronous result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
+11.  The lifetime of the [=continuations=] and the [=asynchronous result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
       [ *Note:* The [=promise=] may move or copy (if the result is `CopyConstructible`) from the result into a new object to ensure this behavior. - *End Note* ]
       [ *Note:* The [=promise=] may move from continuations into new object to ensure this behavior. - *End Note* ]
 
-#.  Upon destruction of a [=promise=]:
+12.  Upon destruction of a [=promise=]:
 
   * First, the [=promise=] checks the [=status=] of its [=future=].
   * Then, if the [=status=] is [=not ready=], the [=promise=] shall be [=fulfilled=].
 
-#.  Setting the [=status=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> operations that check the [=future=]'s status.
+13.  Setting the [=status=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> operations that check the [=future=]'s status.
 
-#.  Operations that modify the set of continuations stored in a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronize with</a> each other.
+14.  Operations that modify the set of continuations stored in a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronize with</a> each other.
 
-#.  Successful [=fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=attachment=] of [=continuations=] to that future.
+15.  Successful [=fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=attachment=] of [=continuations=] to that future.
 
-#.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise [=associated with=] that [=future=].
+16.  Successful [=attachment=] of a [=continuation=] to a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=fulfillment=] of the promise [=associated with=] that [=future=].
 
-#. A [=promise=] is <dfn data-lt="associated with|associated">associated with</dfn> a [=future=] if [=completion=] of the [=promise=] results in completion of the associated [=future=] 
+17. A [=promise=] is <dfn data-lt="associated with|associated">associated with</dfn> a [=future=] if [=completion=] of the [=promise=] results in completion of the associated [=future=].
 
-#.  If a [=future=] has a [=cancellation notifier=], successful [=fulfillment=] of it's associated [=promise=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=] of the [=future=].
+18.  If a [=future=] has a [=cancellation notifier=], successful [=fulfillment=] of it's associated [=promise=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> [=cancellation=] of the [=future=].
 
 `FutureContinuation` Requirements
 ---------------------------------
@@ -1707,7 +1707,6 @@ template<class Future>
 
  * *Throws:* If `f` becomes [=ready=] with an exception, that exception is rethrown.
 
-<br/>
 `FutureContinuation` helper functions
 -------------------------------------
 
