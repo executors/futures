@@ -75,8 +75,8 @@ struct SemiFuture
 template <typename Executor, typename T>
 struct ContinuableFuture
 {
-  template <typename Executor>
-  ContinuableFuture<Executor, T> via(Executor&& exec) &&;
+  template <typename RExecutor>
+  ContinuableFuture<RExecutor, T> via(RExecutor&& exec) &&;
 
   template <typename Continuation>
   ContinuableFuture<Executor, auto> then(Continuation&& c) &&;
@@ -128,15 +128,17 @@ work onto a known executor, and protecting the API from misuse.
 As a simple example:
 ```
 std::standard_semi_future<DataType> async_api() {
-  auto f = doAsyncWork();
-  return f.then([](auto&& val){return deserialize(val);});
+  std::standard_continuable_future<APIExecutor, SerializedDataType> =
+    doAsyncWork();
+  return std::move(f).then(
+    [](SerializedDataType&& val){return deserialize(val);});
 }
 
 void caller() {
   LocalExecutor e;
   auto sf = async_api();
-  auto f = sf.via(e);
-  f.then([](DataType&& data){
+  auto f = std::move(sf).via(e);
+  std::move(f).then([](DataType&& data){
     std::cout << "Name: " << data.name() << "\n";
   });
 }
