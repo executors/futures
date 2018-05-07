@@ -1429,7 +1429,7 @@ template<class Future>
   void future_wait(Future& f) noexcept;
 ```
 
- * *Requires:* SemiFuture<Future>
+ * *Requires:* `decay_t<Future>` meets the requirements of `SemiFuture`
 
  * *Effects:* Blocks the calling thread until `f` becomes ready.
 
@@ -1444,7 +1444,7 @@ In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
 namespace std {
   namespace this_thread {
     template<class Future>
-      auto future_get(Future&& f) -> std::decay_t<Future>::value_type;
+      future_value_t<decay_t<Future>> future_get(Future&& f);
   }
 }
 ```
@@ -1453,21 +1453,27 @@ namespace std {
 To [thread.thread.this] add:
 ```
 template<class Future>
-  auto future_get(Future&& f)
-    -> std::decay_t<Future>::value_type;
+  future_value_t<decay_t<Future>>
+  future_get(Future&& f);
 ```
- * *Requires:* SemiFuture<Future>
+ * *Requires:*
+   - `decay_t<Future>` meets the requirements of `SemiFuture`
+   - `!is_reference_v<Future>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
 
- * *Effects:* Blocks the calling thread until `f` becomes ready.
+ * *Effects:*
+    - `wait()`s until `f` is [=ready=]
+    - retrieves the [=asynchronous result=]
 
  * *Returns:*
-     * If `f` becomes ready with a value, moves the value from `f` and returns it
+     * If `f` becomes [=ready=] with a value, moves the value from `f` and returns it
         to the caller.
+
+ * *Postconditions:* `f` is [=invalid=].
 
  * *Synchronization:* The destruction of the continuation that generates `f`'s
       value synchronizes-with the corresponding `future_get` return.
 
- * *Throws:* If `f` becomes ready with an exception, that exception is rethrown.
+ * *Throws:* If `f` becomes [=ready=] with an exception, that exception is rethrown.
 
 <br/>
 `FutureContinuation` helper functions
