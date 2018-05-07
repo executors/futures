@@ -789,8 +789,7 @@ public:
     template <typename Promise>
     explicit standard_promise(Promise&& p);
 
-    void set_value(const T& val) &&;
-    void set_value(T&& val) &&;
+    void set_value(/* see below */) &&;
     
     template <typename Error>
     void set_exception(Error&& err) &&;
@@ -831,7 +830,7 @@ standard_promise(standard_promise&& rhs) noexcept;
 <br/>
 
 ```
-template <typename Promise>
+template <class Promise>
 standard_promise(Promise&& rhs) noexcept;
 ```
  * *Requires:*
@@ -850,32 +849,24 @@ standard_promise(Promise&& rhs) noexcept;
 
 
 ```
-void set_value(const T& val) &&;
+void standard_promise::set_value(const T& val) &&;
+void standard_promise::set_value(T&& val) &&;
+void standard_promise<void>::set_value() &&;
 ```
  * *Effects:*
-   - If `valid() == true`, equivalent to calling `set_value(val)` on the [=promise=] that `*this` refers to.
-   - Otherwise, throws
+
+  - If `valid() == true`,
+    - For `standard_promise::set_value(const T& val) &&`: equivalent to calling `set_value(val)` on the [=promise=] that `*this` refers to.
+    - For `standard_promise::set_value(T&& val) &&`: equivalent to calling `set_value(std::move(val))` on the [=promise=] that `*this` refers to.
+    - For `standard_promise<void>::set_value() &&`: equivalent to calling `set_value()` on the [=promise=] that `*this` refers to.
+  - Otherwise, throws
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
  * *Postconditions:* 
    - `valid() == false`
 
- * *Notes:* does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
-
-<br/>
-
-```
-void set_value(T&& val) &&;
-```
- * *Effects:*
-   - If `valid() == true`, equivalent to calling `set_value(std::move(val))` on the [=promise=] that `*this` refers to.
-   - Otherwise, throws
-
- * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
-
- * *Postconditions:* 
-   - `valid() == false`
+ * *Notes:* `standard_promise::set_value(const T& val) &&` does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
 
 <br/>
 
