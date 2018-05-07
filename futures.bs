@@ -764,10 +764,9 @@ template <typename Promise>
 standard_promise(Promise&& rhs) noexcept;
 ```
  * *Requires:*
-   - `decay_t<Promise>` is a [=promise=].
+   - `Promise` meets the requirements for `Promise<value_type>`
    - `!is_same_v<decay_t<Promise>, standard_promise>`
    - `!is_reference_v<Promise>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
-   - `is_same_v<promise_value_t<decay_t<Promise>>, value_type>`
 
  * *Effects:*  Constructs a `standard_promise` object that refers to the [=promise=] `rhs` and is associated with the same [=future=] as `rhs`.
        (if `rhs` is associated with a [=future=]).
