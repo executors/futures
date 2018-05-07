@@ -238,11 +238,11 @@ Future/Promise Model
 
 #.  A <dfn>future</dfn> is an object that executes, on a executor, <dfn>continuations</dfn> that are passed an [=asynchronous result=] as a parameter.
 
-  * A <dfn>unique future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
-  * A [=shared future=] copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
+  * A <dfn>uniquely owned future</dfn> moves from the [=asynchronous result=] and can have at most one [=continuation=] attached.
+  * A <dfn>non-uniquely owned future</dfn> copies from the [=asynchronous result=] and can have one or more [=continuations=] attached.
 
 #.  A <dfn>promise</dfn> is an object that produces an [=asynchronous result=] and is associated with a [=future=]. [ *Note:* Although a [=promise=] is associated with one [=future=], multipl
-#. The status of a [=future=]:
+#. The <dfn>status</dfn> of a [=future=]:
 
   * Is either <dfn>ready</dfn>, <dfn>not ready</dfn>, or <dfn>invalid</dfn>.
   * Shall be [=ready=] if and only if the [=future promise pairs=] [=content=] holds a value or an exception ready for retrieval.
@@ -262,7 +262,7 @@ Future/Promise Model
   * Then,
     * If the [=status=] is [=ready=] or [=not ready=]:
       * The [=continuation=] is enqueued for execution pending readiness of [=future=] on the [=future's=] executor, with the [=asynchronous result=] as its parameter.
-      * Finally, if the [=future=] is a [=unique future=], the status is set to [=invalid=].
+      * Finally, if the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=].
     * If the [=status=] is [=invalid=], the behavior is unspecified.
 
 #.  When a [=promise=] <dfn data-lt="fulfillment|fulfill|fulfills|fulfilled">fulfills</dfn> its associated [=future=] with a value or error, if the lifetime of the [=future=] has not ended:
@@ -270,7 +270,7 @@ Future/Promise Model
   * First, the [=status=] of its [=future=] is checked.
   * Then,
     * If the [=status=] is [=not ready=]:
-      * If the [=future=] is a [=unique future=], the status is set to [=invalid=]. Otherwise, the [=status=] is set to [=ready=]
+      * If the [=future=] is a [=uniquely owned future=], the status is set to [=invalid=]. Otherwise, the [=status=] is set to [=ready=]
       * Finally, any execution agents that are blocking until the [=status=] is [=ready=] are unblocked.
     * If the [=status=] is [=ready=] or [=invalid=], the behavior is unspecified.
 
@@ -279,7 +279,7 @@ If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
 #. [=Fulfillment=] of a [=future=] synchronizes with execution of [=continuations=] that were enqueued for execution by that [=future=].
 
 #. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
-      [ *Note:* The [=future=] may move (if it is a [=unique future=]) or copy (if it is a [=shared future=]) from the result into a new object to ensure this behavior. - *End Note* ]
+      [ *Note:* The [=future=] may move (if it is a [=uniquely owned future=]) or copy (if it is a [=non-uniquely owned future=]) from the result into a new object to ensure this behavior. - *End Note* ]
       [ *Note:* The [=future=] may move from [=continuations=] into new object to ensure this behavior. - *End Note* ]
 
 #.  The lifetime of the [=continuations=] and the [=asynchronous result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
