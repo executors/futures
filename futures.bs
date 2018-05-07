@@ -21,24 +21,35 @@ Editor: Michał Dominiak, Nokia, griwes@griwes.info
 
 Contributors:
 
-* Marshall Cline
-* Carter   Edwards
-* Jay      Feldblum
-* Andrii   Grynenko
-* Jared    Hoberock
-* Hartmut  Kaiser
-* Chris    Kohlhoff
-* Chris    Mysen
-* Eric     Niebler
-* Sean     Parent
-* Cory     Perry
-* Felix    Petriconi
-* Kirk     Shoop
-* Mathias  Stearn
+<table border=1>
+<tr>
+<td>Marshall Cline<\td>
+<td>Carter   Edwards<\td>
+<td>Jay      Feldblum<\td>
+</tr>
+<tr>
+<td>Andrii   Grynenko<\td>
+<td>Jared    Hoberock<\td>
+<td>Hartmut  Kaiser<\td>
+</tr>
+<tr>
+<td>Chris    Kohlhoff<\td>
+<td>Chris    Mysen<\td>
+<td>Eric     Niebler<\td>
+</tr>
+<tr>
+<td>Sean     Parent<\td>
+<td>Cory     Perry<\td>
+<td>Felix    Petriconi<\td>
+</tr>
+<tr>
+<td>Kirk     Shoop<\td>
+<td>Mathias  Stearn<\td>
+<td></td>
+</tr>
+</table>
 
-
-Introduction {#intro}
-=====================
+# Introduction {#intro}
 
 This paper introduces a hierarchy of concepts for future types that are designed to:
 
@@ -179,8 +190,7 @@ auto f2 = std::move(f).then([](T val){return val;}).then([](T2 val){return val;}
 but this is a minor inconvenience given that it allows the tooling to warn on
 use-after-move and related misuses.
 
-The Cancellation Model
---------------------
+## The Cancellation Model
 
 This paper proposes a way to hook a [=cancellation notifier=] into a future/promise pair, using `cancellable_promise_contract_t`.
 It allows for authors of future types to support cancellation if they want to, and to correctly hook into the cancellation mechanisms
@@ -202,8 +212,7 @@ auto via(Executor && ex) &&
 We are currently not proposing a concrete cancellation API; we plan to do that in a future revision of the paper. At this time, there is
 no guarantee that a future honors a [=cancellation notifier=], and no requirements as to when it actually invokes it.
 
-The Error Model
---------------------
+## The Error Model
 
 In the example below, let `f` and `g` be `ContinuableFuture`s and let `c` be a `FutureContinuation`.
 
@@ -222,13 +231,9 @@ When `f` is fulfilled:
 
 Note that if both overloads are defined, `decltype(G(exception_arg, err))` shall be convertible to `decltype(G(val))`.
 
-FAQ
----
+## Blocking Interfaces (`.get` and `.wait`) {#blocking_interfaces}
 
-<i>Q: Where is `.get` and `.wait`?</i>
-
-*A:*
-Remember, the future concepts in this paper are intended to express the minimal requirements for executors interoperation and composition.
+The future concepts in this paper are intended to express the minimal requirements for executors interoperation and composition.
 Executors do not require a blocking interface, and futures do not require a blocking interface to compose.
 This paper proposes the addition of the free functions `std::this_thread::future_wait` and `std::this_thread::future_get`.
 These functions will block on any `SemiFuture` type, and are suitable for use within `std::thread` execution agents.
@@ -239,18 +244,7 @@ We believe that this is a perfectly valid design; however, such non-continuable 
 * If you want to write a future that only doesn't have blocking interfaces and does support continuations, that's fine! That type of future can interoperate with executors, so you should conform to the proposed concepts.
 * If you want to write a future that has blocking interfaces and supports continuations, that's fine! That type of future can interoperate with executors, so you should conform to the proposed concepts.
 
-Related Work
-------------
-
-This work is unification of prior papers written individually by the authors:
-
-* [P0701r0](https://wg21.link/P0701r0)
-* [P0701r1](https://wg21.link/P0701r1)
-* [P0783r0](https://wg21.link/P0783r0)
-* [P0904r0](https://wg21.link/P0904r0)
-
-Proposed Addition to Executors P0443
-=============================
+## Proposed Addition to Executors [[P0443]] {#wording_executors}
 
 [p0443](https://wg21.link/P0443) defines a collection of executor types intended
 for use managing the execution of tasks on resources.
@@ -353,7 +347,7 @@ Future/Promise Model
 
     If the lifetime of the [=future=] has ended, [=fulfillment=] has no effect.
 
-9. [=Fulfillment=] of a [=future=] synchronizes with execution of [=continuations=] that were enqueued for execution by that [=future=].
+9. [=Fulfillment=] of a [=future=] <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> execution of [=continuations=] that were enqueued for execution by that [=future=].
 
 10. The lifetime of the [=continuations=] and the [=asynchronus result=] passed to the [=continuations=] shall last until execution of the [=continuations=] completes.
       [ *Note:* The [=future=] may move (if it is a [=uniquely owned future=]) or copy (if it is a [=non-uniquely owned future=]) from the result into a new object to ensure this behavior. - *End Note* ]
@@ -699,7 +693,7 @@ template<class Executor>
   <td>
     A `ContinuableFuture` type for value type `T` and executor type `E`, either:
     * `decltype(execution::query(e, promise_contract_t<T>()).second)` if `E` is a `ThenExecutor` and `execution::can_query_v<E, promise_contract_t<T>> == true`, or
-    * `continuable_future<T>` otherwise.
+    * `continuable_future<T, E>` otherwise.
   </td>
 </tr>
 </table>
@@ -874,7 +868,7 @@ template<class Executor>
 
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-      The invocation of `.then` synchronizes with
+      The invocation of `.then` <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a>
       (C++Std [intro.multithread]) the invocation of `g`.
 
       [=Fulfills=] the `ContinuableFuture` with the result of the `NORMAL` or
@@ -884,7 +878,7 @@ template<class Executor>
     <!-- This may be covered by the synchronization requirements in the front-matter text (e.g. "future/promise model") -->
 
     **Synchronization:** The destruction of the continuation that generates
-      `rcf`'s value synchronizes with the invocation of `g` and with the destruction
+      `rcf`'s value <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> the invocation of `g` and with the destruction
       of `g`.
   </td>
 </tr>
@@ -999,7 +993,7 @@ Descriptive Variable Definitions
 
       May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-      The invocation of `.then` synchronizes with
+      The invocation of `.then` <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a>
       (C++Std [intro.multithread]) the invocation of `g`.
 
       [=Fulfills=] the `ContinuableFuture` with the result of the `NORMAL` or
@@ -1398,7 +1392,7 @@ ReturnFuture then(F&&) &&;
 
      * May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-     * The invocation of `.then` synchronizes with
+     * The invocation of `.then` <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a>
         (C++Std [intro.multithread]) the invocation of `f`.
 
      * Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
@@ -1576,7 +1570,7 @@ ReturnFuture then(F&&);
 
      * May block pending completion of `NORMAL` or `EXCEPTIONAL`.
 
-     * The invocation of `.then` synchronizes with
+     * The invocation of `.then` <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a>
         (C++Std [intro.multithread]) the invocation of `f`.
 
      * Stores the result of either the `NORMAL` or `EXCEPTIONAL` expression, or
@@ -1665,127 +1659,131 @@ make_promise_contract()
     * a `promise` that refers to a [=promise=] that is associated with the [=future=] in the pair
     * a `semi_future` that is associated with the [=promise=].
 
+## Generic Future Blocking Functions
 
-`std::this_thread::future_wait`
-----------------------------------
-In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
+In [**thread.syn**] and [**thread.thread.this**] add:
+
 ```
-namespace std {
-  namespace this_thread {
-    template<class Future>
-      void future_wait(Future& f) noexcept;
-  }
+namespace std::this_thread {
+
+  template<class Future>
+    void future_wait(Future& f) noexcept;
+
+  template<class Future>
+    future_value_t<decay_t<Future>> future_get(Future&& f);
+
 }
 ```
 
-<br/>
-To [thread.thread.this] add:
+In [**thread.thread.this**] add:
+
 ```
 template<class Future>
   void future_wait(Future& f) noexcept;
 ```
 
- * *Requires:* `Future` meets the requirements of `SemiFuture`
+* *Requires:* `Future` meets the requirements of `SemiFuture`.
 
- * *Effects:* Blocks the calling thread until `f` becomes ready.
+* *Effects:* Blocks the calling thread until `f` becomes ready.
 
- * *Synchronization:* The destruction of the continuation that generates `f`'s
-      value synchronizes-with the corresponding `future_wait` return.
+* *Synchronization:* The destruction of the continuation that [=fulfills=]
+     `f`'s <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a>
+     `future_wait` calls blocking until `f` becomes ready.
 
-
-`std::this_thread::future_get`
-----------------------------------
-In [thread.syn] and [thread.thread.this] extend `this_thread` namespace:
-```
-namespace std {
-  namespace this_thread {
-    template<class Future>
-      future_value_t<decay_t<Future>> future_get(Future&& f);
-  }
-}
-```
-
-<br/>
-To [thread.thread.this] add:
 ```
 template<class Future>
   future_value_t<decay_t<Future>> future_get(Future&& f);
 ```
- * *Requires:*
-   - `decay_t<Future>` meets the requirements of `SemiFuture`
-   - `!is_reference_v<Future>` [*Note:* This constrains the parameter to be an rvalue reference rather than a forwarding reference *—end note*]
 
- * *Effects:*
-    - blocks the calling thread until `f` becomes ready
-    - retrieves the [=asynchronous result=]
+* *Requires:*
+  * `decay_t<Future>` shall meet the `SemiFuture` requirements.
+  * `!is_reference_v<Future>`
+      [ *Note:*
+      This constrains the parameter to be an rvalue reference rather than a forwarding reference.
+      — *end note* ]
 
- * *Returns:*
-     * If `f` becomes [=ready=] with a value, moves the value from `f` and returns it
-        to the caller.
+* *Effects:*
+  * Blocks the calling thread until `f` becomes ready.
+  * Retrieves the [=asynchronous result=].
 
- * *Postconditions:* `f` is [=invalid=].
+* *Returns:*
+    * If `f` becomes [=ready=] with a value, moves the value from `f` and returns it
+       to the caller.
 
- * *Synchronization:* The destruction of the continuation that generates `f`'s
-      value synchronizes-with the corresponding `future_get` return.
+* *Postconditions:* `f` is [=invalid=].
 
- * *Throws:* If `f` becomes [=ready=] with an exception, that exception is rethrown.
+* *Synchronization:* The destruction of the continuation that generates `f`'s
+     value <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a>
+     `future_get` calls blocking until `f` becomes ready.
 
-`FutureContinuation` helper functions
--------------------------------------
+* *Throws:* If `f` becomes [=ready=] with an exception, that exception is rethrown.
 
-### Function template `on_value`
+## `FutureContinuation` Helper Functions
 
-<!-- Following parallel algorithms precedent, these functions should take their template parameters by value -->
+```
+namespace std::execution {
 
-```c++
 template <class F>
-/* see below */ on_value(F f);
+  /* see below */ on_value(F&& f);
+
+template<class F>
+  /* see below */ on_error(F&& f);
+
+template<class F, class G>
+  /* see below */ on_value_or_error(F&& f, G&& g);
+
+}
+```
+
+### Function Template `on_value`
+
+```
+template<class F>
+  /* see below */ on_value(F&& f);
 ```
 
 **Requires:**
-  - For a (possibly cv-qualified) object type `T`, `INVOKE(declval<F>(), declval<T>())` must be valid
-  - `F` must meet the requirements of `MoveConstructible`
+* For any (possibly cv-qualified) object type `T`,
+    `invoke(declval<F>(), declval<T>())` shall be well-formed.
+* `F` shall meet the `MoveConstructible` requirements.
 
 **Returns:**
-A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
-following operational semantics:
+A `FutureContinuation` object, `fc`, of implementation-defined type such that:
 
-- `fc(t)` is valid for objects `t` of type `T` and has the same effects
-    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_value()`.
-    The object `ff` is constructed before the return of `on_value()` and destroyed when `fc` is destroyed.
-- `fc` cannot be invoked with `exception_arg` as the first argument when calling `fc` with more than one argument.
-    [*Note:* This means that calling `fc` in this way must fail to compile *— end note*]
+* `fc(t)` is valid for objects `t` of type `T` and has the same effects as
+    `invoke(ff, t)`, where `ff` is an instance of `F` move-constructed from
+    `forward<F>(f)`.
+    The object `ff` is constructed before the return of `on_value()` and
+    destroyed when `fc` is destroyed.
+* `fc(exception_arg, exception_ptr{})` is ill-formed.
 
-
-### Function template `on_error`
+### Function Template `on_error`
 
 <!-- Following parallel algorithms precedent, these functions should take their template parameters by value -->
 
-```c++
-template <class F>
-/* see below */ on_error(F f);
+```
+template<class F>
+  /* see below */ on_error(F&& f);
 ```
 
 **Requires:**
-  - `INVOKE(declval<F>(), declval<exception_ptr>())` must be valid
-  - `F` must meet the requirements of `MoveConstructible`
+* `invoke(declval<F>(), declval<exception_ptr>())` shall be well-formed.
+* `F` shall meet the `MoveConstructible` requirements.
 
 **Returns:**
-A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
-following operational semantics:
+A `FutureContinuation` object, `fc`, of implementation-defined type such that:
+* `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and
+    has the same effects as `invoke(ff, e)`, where `ff` is an object of type
+    `F` move-constructed from `forward<F>(f)`.
+    The object `ff` is constructed before the return of `on_error` and
+    destroyed when `fc` is destroyed.
+* `fc(t)` is ill-formed for any type `T`. 
 
-- `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
-    as `INVOKE(ff, e)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_error()`.
-    The object `ff` is constructed before the return of `on_error()` and destroyed when `fc` is destroyed.
-- `fc` cannot be invoked with one argument. [*Note:* This means that calling
-    `fc` with one argument must fail to compile *— end note*]
+<!--
 
-
-```c++
-template <class F>
-/* see below */ on_expected(F f);
+```
+template<class F>
+  /* see below */ on_expected(F f);
 ```
 
 **Requires:**
@@ -1795,7 +1793,6 @@ template <class F>
 **Returns:**
 A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
 following operational semantics:
-
 - `fc(t)` is valid for objects `t` of type `T` and has the same effects
     as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
     argument to `on_expected()`.
@@ -1805,339 +1802,425 @@ following operational semantics:
     argument to `on_expected()`.
     The object `ff` is constructed before the return of `on_expected()` and destroyed when `fc` is destroyed.
 
+-->
 
-<!-- Note: I've omitted on_visitor() because it is identical in terms of operational semantics to on_expected() and/or requires the pair of types T, E to be explicitly defined -->
+<!-- NOTE: I've omitted on_visitor() because it is identical in terms of operational semantics to on_expected() and/or requires the pair of types T, E to be explicitly defined -->
 
-```c++
-template <class F, class G>
-/* see below */ on_value_or_error(F f, G g);
+```
+template<class F, class G>
+  /* see below */ on_value_or_error(F&& f, G&& g);
 ```
 
 **Requires:**
-  - For a (possibly cv-qualified) object type `T`,
-    `INVOKE(declval<F>(), declval<T>())` and
-    `INVOKE(declval<G>(), declval<exception_ptr>())` must be valid.
-  - `F` and `G` must meet the requirements of `MoveConstructible`
+
+* For any (possibly cv-qualified) object type `T`,
+    `invoke(declval<F>(), declval<T>())` and
+    `invoke(declval<G>(), declval<exception_ptr>())` shall be well-formed.
+* `F` and `G` shall meet the `MoveConstructible` requirements.
 
 **Returns:**
-A `FutureContinuation` object, `fc`, of implementation-defined type that meets the
-following operational semantics:
+A `FutureContinuation` object, `fc`, of implementation-defined type such that:
+* `fc(t)` is well-formed for objects `t` of type `T` and has the same effects
+    as `invoke(ff, t)`, where `ff` is an object of type `F` move-constructed
+    from `forward<F>(f)`.
+    The object `ff` is constructed before the return of `on_value_or_error`
+    and destroyed when `fc` is destroyed.
+* `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and
+    has the same effects as `invoke(gg, e)`, where `gg` is an object of type of
+    `G` move-constructed from `forward<G>(g)`. 
+    The object `gg` is constructed before the return of `on_value_or_error` and
+    destroyed when `fc` is destroyed.
 
-- `fc(t)` is valid for objects `t` of type `T` and has the same effects
-    as `INVOKE(ff, t)`, where `ff` is an instance of `F` move-constructed from the
-    argument to `on_value_or_error()`.
-    The object `ff` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
-- `fc(exception_tag, e)` is valid for objects `e` of type `exception_ptr` and has the same effects
-    as `INVOKE(gg, e)`, where `gg` is an instance of `G` move-constructed from the
-    argument to `on_value_or_error()`.
-    The object `gg` is constructed before the return of `on_value_or_error()` and destroyed when `fc` is destroyed.
+# Proposed Modifications to P0443 (Executors)
 
+`Future` Requirements
 
+Drop this entire section and replace with this paper.
 
-Proposed Modifications to Executors P0443
-=============================
-[p0443](https://wg21.link/P0443) currently requires `std::experimental::future`
-due to the absence of a complete future type in the core standard.
+## `TwoWayExecutor` Requirements
 
-This paper provides the wider set of tasks and as a result, the current text in
-[p0443](https://wg21.link/P0443) should be modified as follows.
-
-
-Future requirements
---------------------
-Drop this entire section and replace with the requirements from this paper.
-
-
-TwoWayExecutor requirements
---------------------
-In the *Return Type* column.
+In the *Return Type* column:
 
 **Replace:**
+
+<blockquote>
 A type that satisfies the Future requirements for the value type R.
+</blockquote>
 
 **With:**
-A type that satisfies the ContinuableFuture requirements for the value
-type R and for which `returnvalue.get_executor()` returns x.
+
+<blockquote>
+A type that satisfies the ContinuableFuture requirements for the value type `R`.
+</blockquote>
 
 
-In the *Operational Semantics* column.
+In the *Operational Semantics* column:
 
 **Replace:**
+
+<blockquote>
+in the associated shared state of the resulting `Future`.
+</blockquote>
+
+**With:**
+
+<blockquote>
+in the resulting `ContinuableFuture`.
+</blockquote>
+
+## `ThenExecutor` Requirements
+
+In the type requirements list:
+
+**Replace:**
+
+<blockquote>
+* `fut` denotes a [=future object=] satisfying the `Future` requirements,
+</blockquote>
+
+**With:**
+
+<blockquote>
+* `fut` denotes a [=future object=] that:
+  * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
+      `x.then_execute`, or `x.bulk_then_execute` and meets the
+      `ContinuableFuture` requirements.
+  * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
+      `execution::query(x, cancellable_promise_contract_t<T>)`.
+</blockquote>
+
+In the *Return Type* column:
+
+**Replace:**
+
+<blockquote>
+A type that satisfies the `Future` requirements for the value type `R`.
+</blockquote>
+  
+**With:**
+
+<blockquote>
+A type that satisfies the `ContinuableFuture` requirements for the value type `R`.
+</blockquote>
+
+In the *Operational Semantics* column:
+
+**Replace:**
+
+<blockquote>
+in the associated shared state of the resulting `Future`.
+</blockquote>
+
+**With:**
+
+<blockquote>
+in the resulting `ContinuableFuture`.
+</blockquote>
+
+## `BulkTwoWayExecutor` Requirements
+
+In the *Return Type* column:
+
+**Replace:**
+
+<blockquote>
+A type that satisfies the `Future` requirements for the value type `R`.
+</blockquote>
+
+**With:**
+<blockquote>
+A type that satisfies the `ContinuableFuture` requirements for the value type `R`.
+</blockquote>
+
+In the *Operational Semantics* column:
+
+**Replace:**
+
+<blockquote>
+in the associated shared state of the resulting `Future`.
+</blockquote>
+
+**With:**
+
+<blockquote>
+in the resulting `ContinuableFuture`.
+</blockquote>
+
+## `BulkThenExecutor` Requirements
+
+In the type requirements list:
+
+**Replace:**
+
+<blockquote>
+* fut denotes a future object satisfying the Future requirements,
+</blockquote>
+
+**With:**
+
+<blockquote>
+* fut denotes a future object that:
+  * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
+      `x.then_execute`, or `x.bulk_then_execute` and meets the
+      `ContinuableFuture` requirements.
+  * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
+      `execution::query(x, cancellable_promise_contract_t<T>)`.
+</blockquote>
+
+In the *Return Type* column:
+
+**Replace:**
+
+<blockquote>
+A type that satisfies the `Future` requirements for the value type `R`.
+</blockquote>
+
+**With:**
+
+<blockquote>
+A type that satisfies the `ContinuableFuture` requirements for the value type `R`
+</blockquote>
+
+In the *Operational Semantics* column:
+
+**Replace:**
+
+<blockquote>
 in the associated shared state of the resulting Future.
+</blockquote>
 
 **With:**
+
+<blockquote>
 in the resulting ContinuableFuture.
+</blockquote>
 
-
-
-ThenExecutor requirements
---------------------
-In the type requirements list.
+## `twoway_t` Customization Points
 
 **Replace:**
- * fut denotes a future object satisfying the Future requirements,
+
+<blockquote>
+it is `std::experimental::future<T>`
+</blockquote>
 
 **With:**
- * fut denotes a future object that:
-     * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
-        `x.then_execute`, or `x.bulk_then_execute` and meets the
-        `ContinuableFuture` requirements.
-     * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
-        `execution::query(x, cancellable_promise_contract_t<T>)`
 
-In the *Return Type* column.
+<blockquote>
+it is a `execution::continuable_future<T, E1>`
+</blockquote>
+
+##`single_t` Customization Points
 
 **Replace:**
-A type that satisfies the Future requirements for the value type R.
+
+<blockquote>
+it is `std::experimental::future<T>`
+</blockquote>
 
 **With:**
-A type that satisfies the ContinuableFuture requirements for the value
-type R and for which `returnvalue.get_executor()` returns x.
 
+<blockquote>
+it is `execution::continuable_future<T, E1>`
+</blockquote>
 
-In the *Operational Semantics* column.
+## Properties To Indicate If Blocking And Directionality May Be Adapted
 
-**Replace:**
-in the associated shared state of the resulting Future.
+Remove `twoway_t` from the **Requirements** column of the Table.
 
-**With:**
-in the resulting ContinuableFuture.
-
-
-BulkTwoWayExecutor requirements
---------------------
-In the *Return Type* column.
+## Class Template `executor`
 
 **Replace:**
-A type that satisfies the Future requirements for the value type R.
 
-**With:**
-A type that satisfies the ContinuableFutureFuture requirements for the value
-type R and for which `returnvalue.get_executor()` returns x.
-
-In the *Operational Semantics* column.
-
-**Replace:**
-in the associated shared state of the resulting Future.
-
-**With:**
-in the resulting ContinuableFuture.
-
-
-BulkThenExecutor requirements
---------------------
-In the type requirements list.
-
-**Replace:**
- * fut denotes a future object satisfying the Future requirements,
-
-**With:**
- * fut denotes a future object that:
-     * was returned by a call to `x.twoway_execute`, `x.bulk_twoway_execute`,
-        `x.then_execute`, or `x.bulk_then_execute` and meets the
-        `ContinuableFuture` requirements.
-     * was returned by a call to `execution::query(x, promise_contract_t<T>)` or
-        `execution::query(x, cancellable_promise_contract_t<T>)`.
-
-In the *Return Type* column.
-
-**Replace:**
-A type that satisfies the Future requirements for the value type R.
-
-**With:**
-A type that satisfies the ContinuableFutureFuture requirements for the value
-type R and for which `returnvalue.get_executor()` returns x.
-
-
-In the *Operational Semantics* column.
-
-**Replace:**
-in the associated shared state of the resulting Future.
-
-**With:**
-in the resulting ContinuableFuture.
-
-
-twoway_t customization points
---------------------
-**Replace:**
-
-    it is `std::experimental::future<T>`
-
-**with:**
-
-    it is `std::execution::continuable_future<T, E1>` such that a call to
-   `get_executor()` returns a copy of `e1`
-
-
-single_t customization points
---------------------
-**Replace:**
-
-    it is `std::experimental::future<T>`
-
-**with:**
-
-    it is `std::execution::continuable_future<T, E1>` such that a call to
-    `get_executor()` returns a copy of `e1`
-
-
-Properties to indicate if blocking and directionality may be adapted
---------------------
-Remove `twoway_t` from the **Requirements** column of hte table.
-
-Remove note referring to `std::experimental::future`.
-
-[*Note:* `std::experimental::future` is not used and the replacemnt does not
- have a blocking wait so this is no longer relevant.]
-
-
-Class template executor
---------------------
-**Replace:**
-```
-  template<class Function>
-    std::experimental::future<result_of_t<decay_t<Function>()>>
-      twoway_execute(Function&& f) const
-```
-
-**With:**
-```
-  template<class Function>
-    std::execution::semi_future<result_of_t<decay_t<Function>()>>
-      twoway_execute(Function&& f) const
-```
-
-**Replace:**
-```
-  template<class Function, class ResultFactory, class SharedFactory>
-    std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
-      bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
-```
-
-**With:**
-```
-  template<class Function, class ResultFactory, class SharedFactory>
-    std::execution::semi_future<result_of_t<decay_t<ResultFactory>()>>
-      bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
-```
-
-[*Note:* We lose the executor information here. Potentially we should encode
- the future type, including its executor, in the properties of the polymorphic
- wrapper.]
-
-
-executor operations
---------------------
-**Replace:**
-
+<blockquote>
 ```
 template<class Function>
   std::experimental::future<result_of_t<decay_t<Function>()>>
     twoway_execute(Function&& f) const
 ```
+</blockquote>
 
 **With:**
 
+<blockquote>
+```
+template<class Function>
+  execution::semi_future<result_of_t<decay_t<Function>()>>
+    twoway_execute(Function&& f) const
+```
+</blockquote>
+
+**Replace:**
+
+<blockquote>
+```
+template<class Function, class ResultFactory, class SharedFactory>
+  std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
+    bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
+</blockquote>
+
+**With:**
+
+<blockquote>
+```
+template<class Function, class ResultFactory, class SharedFactory>
+  execution::semi_future<result_of_t<decay_t<ResultFactory>()>>
+    bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+```
+</blockquote>
+
+<!-- NOTE: We lose the executor information here. Potentially we should encode the future type, including its executor, in the properties of the polymorphic wrapper -->
+
+## `executor` Operations
+
+**Replace:**
+
+<blockquote>
+```
+template<class Function>
+  std::experimental::future<result_of_t<decay_t<Function>()>>
+    twoway_execute(Function&& f) const
+```
+</blockquote>
+
+**With:**
+
+<blockquote>
 ```
 template<class Function>
   /* implementation-defined future type */
-    twoway_execute(Function&& f) con
+    twoway_execute(Function&& f) const
 ```
+</blockquote>
 
 **Replace:**
 
-Returns: A future, whose shared state is made ready when the future returned by
-e.twoway_execute(f2) is made ready, containing the result of f1() or any
-exception thrown by f1(). [Note: e2.twoway_execute(f2) may return any future
-type that satisfies the Future requirements, and not necessarily
-std::experimental::future. One possible implementation approach is for the
-polymorphic wrapper to attach a continuation to the inner future via that
-object's then() member function. When invoked, this continuation stores the
-result in the outer future's associated shared and makes that shared state
-ready. --end note]
+<blockquote>
+*Returns:*
+A future, whose shared state is made ready when the future returned by
+  `e.twoway_execute(f2)` is made ready, containing the result of `f1()` or any
+  exception thrown by `f1()`.
+[ *Note:*
+`e2.twoway_execute(f2)` may return any future type that satisfies the `Future` requirements, and not necessarily
+One possible implementation approach is for the polymorphic wrapper to attach a
+  continuation to the inner future via that object's `then()` member function.
+When invoked, this continuation stores the result in the outer future's
+  associated shared state and makes that shared state ready.
+— *end note* ]
+</blockquote>
 
 **With:**
 
-*Returns:* A value whose type satisfies the `ContinuableFuture` requirements.
-The returned future is made ready when `f1()` completes execution, with the
-result of `f1()` if `decltype(f1())` is non-void, void completion if
-`decltype(f1())` is void or any exception thrown by `f1()`.
-
+<blockquote>
+*Returns:*
+A value whose type satisfies the `ContinuableFuture` requirements.
+The returned future is [=fulfilled=] when `f1()` completes execution, with
+  the result of `f1()` (if `decltype(f1())` is non-`void`), valueless completion
+  (if `decltype(f1())` is `void`), or any exception thrown by `f1()`.
+</blockquote>
 
 **Replace:**
+
+<blockquote>
 ```
 template<class Function, class ResultFactory, class SharedFactory>
   std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
     void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
 ```
-
+</blockquote>
 
 **With:**
+
+<blockquote>
 ```
 template<class Function, class ResultFactory, class SharedFactory>
   /* implementation-defined future type */
      bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
 ```
-
+</blockquote>
 
 **Replace:**
 
-*Returns:* A future, whose shared state is made ready when the future returned
-by e.bulk_twoway_execute(f2, n, rf2, sf2) is made ready, containing the result
-in r1 (if decltype(rf1()) is non-void) or any exception thrown by an
-invocationf1. [Note: e.bulk_twoway_execute(f2) may greturn any future type that
-satisfies the Future requirements, and not necessarily std::experimental::future.
+<blockquote>
+*Returns:*
+A future, whose shared state is made ready when the future returned
+  by e.bulk_twoway_execute(f2, n, rf2, sf2) is made ready, containing the result
+  in r1 (if decltype(rf1()) is non-void) or any exception thrown by an
+  invocation `f1`.
+[ *Note:*
+`e.bulk_twoway_execute(f2)` may return any future type that satisfies the
+  `Future` requirements, and not necessarily `std::experimental::future`.
 One possible implementation approach is for the polymorphic wrapper to attach a
-continuation to the inner future via that object's then() member function. When
-invoked, this continuation stores the result in the outer future's associated
-shared and makes that shared state ready. --end note]
+  continuation to the inner future via that object's `then()` member function.
+When invoked, this continuation stores the result in the outer future's
+  associated shared state and makes that shared state ready.
+— *end note* ]
+</blockquote>
 
 **With:**
 
-*Returns:* A value whose type satisfies the `ContinuableFuture` requirements.
-The returned future is made ready when `f1()` completes execution, with
-the result in `r1` (if `decltype(rf1())` is non-void), valueless completion
-(if `decltype(rf1())` is void) or any exception thrown by an invocation `f1`.
+*Returns:*
 
+<blockquote>
+A value whose type satisfies the `ContinuableFuture` requirements.
+The returned future is [=fulfilled=] when `f1()` completes execution, with
+  the result in `r1` (if `decltype(rf1())` is non-`void`), valueless completion
+  (if `decltype(rf1())` is void), or any exception thrown by an invocation `f1`.
+</blockquote>
 
-static_thread_pool executor types
---------------------
+## `static_thread_pool` Executor Types
+
 **Replace:**
+
+<blockquote>
 ```
-    template<class Function>
-      std::experimental::future<result_of_t<decay_t<Function>()>>
-        twoway_execute(Function&& f) const
+template<class Function>
+  std::experimental::future<result_of_t<decay_t<Function>()>>
+    twoway_execute(Function&& f) const
 
-    template<class Function, class Future>
-      std::experimental::future<result_of_t<decay_t<Function>(decay_t<Future>)>>
-        then_execute(Function&& f, Future&& pred) const;
+template<class Function, class Future>
+  std::experimental::future<result_of_t<decay_t<Function>(decay_t<Future>)>>
+    then_execute(Function&& f, Future&& pred) const;
 
-    template<class Function, class SharedFactory>
-      void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
+template<class Function, class SharedFactory>
+  void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
 
-    template<class Function, class ResultFactory, class SharedFactory>
-      std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
-        void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
+template<class Function, class ResultFactory, class SharedFactory>
+  std::experimental::future<result_of_t<decay_t<ResultFactory>()>>
+    void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const;
 ```
+</blockquote>
 
 **With:**
+
+<blockquote>
 ```
-  template<class Function>
-    std::execution::continuable_future<result_of_t<decay_t<Function>()>, C>
-      twoway_execute(Function&& f) const
+template<class Function>
+  std::execution::continuable_future<result_of_t<decay_t<Function>()>, C>
+    twoway_execute(Function&& f) const
 
-  template<class Function, class Future>
-    std::execution::continuable_future<result_of_t<decay_t<Function>(decay_t<Future>)>, C>
-      then_execute(Function&& f, Future&& pred) const;
+template<class Function, class Future>
+  execution::continuable_future<result_of_t<decay_t<Function>(decay_t<Future>)>, C>
+    then_execute(Function&& f, Future&& pred) const;
 
-  template<class Function, class SharedFactory>
-    void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
+template<class Function, class SharedFactory>
+  void bulk_execute(Function&& f, size_t n, SharedFactory&& sf) const;
 
-  template<class Function, class ResultFactory, class SharedFactory>
-    std::execution::continuable_future<result_of_t<decay_t<ResultFactory>()>>, C>
-      void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const
+template<class Function, class ResultFactory, class SharedFactory>
+  execution::continuable_future<result_of_t<decay_t<ResultFactory>()>>, C>
+    void bulk_twoway_execute(Function&& f, size_t n, ResultFactory&& rf, SharedFactory&& sf) const
 ```
 
-Replace the same instances in the documentation section below the main code
-block.
+Replace the same instances in the documentation section below the main code block.
+</blockquote>
+
+# Appendix: Prior Work
+
+This work is unification of prior papers written individually by the authors:
+
+* [P0701r0](https://wg21.link/P0701r0)
+* [P0701r1](https://wg21.link/P0701r1)
+* [P0783r0](https://wg21.link/P0783r0)
+* [P0904r0](https://wg21.link/P0904r0)
+
+
