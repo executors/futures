@@ -148,7 +148,7 @@ The answer: work is always enqueued on the consumer side as if, but not
 You can query executor properties to determine whether or not the executor's
   APIs will block, which tells you whether or not continuation [=attachment=]
   (consumer side) or future [=fulfillment=] (producer side) potentially blocks
-  pending execution (e.g. `inline_executor` semantics). 
+  pending execution (e.g. `inline_executor` semantics).
 
 ## Interactions with Executors ## {#intro_executors}
 
@@ -367,7 +367,7 @@ This work is unification of prior papers written individually by the authors:
 * [[P0701r1]]
 * [[P0783r0]]
 * [[P0904r0]]
- 
+
 # Proposed New Wording # {#wording}
 
 The following wording is purely additive to [the executors proposal](https://github.com/executors/executors).
@@ -1074,7 +1074,7 @@ template<class Executor>
     **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
 
     **Success:** Succeeds if:
-     * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+     * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
      * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
      Fails at compile-time otherwise.
@@ -1101,7 +1101,7 @@ public:
     explicit promise(Promise&& p);
 
     void set_value(/* see below */) &&;
-    
+
     template <typename Error>
     void set_exception(Error&& err) &&;
 
@@ -1174,7 +1174,7 @@ void promise<void>::set_value() &&;
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
- * *Postconditions:* 
+ * *Postconditions:*
    - `valid() == false`
 
  * *Notes:* `promise::set_value(const T& val) &&` does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
@@ -1194,7 +1194,7 @@ void set_exception(Error&& err) &&;
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
- * *Postconditions:* 
+ * *Postconditions:*
    - `valid() == false`
 
 <br/>
@@ -1303,7 +1303,7 @@ continuable_future<T, EI> via(EI ex) &&;
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* valid() == false.
@@ -1470,7 +1470,7 @@ continuable_future<T, EI> via(EI ex) &&;
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
   * *Postconditions:* valid() == false.
@@ -1640,7 +1640,7 @@ shared_future<T, EI> via(EI ex);
  * *Returns:* A shared_future modified to carry executor ex of type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* No observable change to \*this.
@@ -1820,7 +1820,7 @@ A `FutureContinuation` object, `fc`, of implementation-defined type such that:
     `F` move-constructed from `forward<F>(f)`.
     The object `ff` is constructed before the return of `on_error` and
     destroyed when `fc` is destroyed.
-* `fc(t)` is ill-formed for any type `T`. 
+* `fc(t)` is ill-formed for any type `T`.
 
 <!--
 
@@ -1870,7 +1870,7 @@ A `FutureContinuation` object, `fc`, of implementation-defined type such that:
     and destroyed when `fc` is destroyed.
 * `fc(exception_tag, e)` is well-formed for objects `e` of type `exception_ptr` and
     has the same effects as `invoke(gg, e)`, where `gg` is an object of type of
-    `G` move-constructed from `forward<G>(g)`. 
+    `G` move-constructed from `forward<G>(g)`.
     The object `gg` is constructed before the return of `on_value_or_error` and
     destroyed when `fc` is destroyed.
 
@@ -1941,7 +1941,7 @@ In the *Return Type* column:
 <blockquote>
 A type that satisfies the `Future` requirements for the value type `R`.
 </blockquote>
-  
+
 **With:**
 
 <blockquote>
@@ -2260,4 +2260,3 @@ template<class Function, class ResultFactory, class SharedFactory>
 
 Replace the same instances in the documentation section below the main code block.
 </blockquote>
-
