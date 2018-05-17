@@ -1080,7 +1080,7 @@ template<class Executor>
     **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
 
     **Success:** Succeeds if:
-     * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+     * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
      * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
      Fails at compile-time otherwise.
@@ -1310,7 +1310,7 @@ continuable_future<T, EI> via(EI ex) &&;
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* valid() == false.
@@ -1477,7 +1477,7 @@ continuable_future<T, EI> via(EI ex) &&;
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
   * *Postconditions:* valid() == false.
@@ -1647,7 +1647,7 @@ shared_future<T, EI> via(EI ex);
  * *Returns:* A shared_future modified to carry executor ex of type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `make_promise_contract(e)` is well-formed.
+   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
    * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* No observable change to \*this.
