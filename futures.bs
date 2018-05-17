@@ -946,6 +946,8 @@ template<class Executor>
     **Synchronization:** The destruction of the continuation that generates
       `rcf`'s value <a href="http://eel.is/c++draft/intro.races#def:synchronize_with">synchronizes with</a> the invocation of `g` and with the destruction
       of `g`.
+
+    **Postconditions:** For a returned future `f`, `f.get_executor()` returns an executor equality comparable to that returned by `rcf.get_executor()` before the call to `.then`.
   </td>
 </tr>
 </table>
@@ -1064,7 +1066,9 @@ template<class Executor>
       `EXCEPTIONAL` expression, or any exception thrown by either.
       Otherwise, [=fulfills=] the `ContinuableFuture` with either `val` or `e`.
 
-    **Postconditions:** Has no observable affect on `sfh`.
+    **Postconditions:**
+     * Has no observable affect on `sfh`.
+     * For a returned future `f`, `f.get_executor()` returns an executor equality comparable to that returned by `rcf.get_executor()` before the call to `.then`.
   </td>
 </tr>
 <tr>
