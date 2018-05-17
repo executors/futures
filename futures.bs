@@ -148,7 +148,7 @@ The answer: work is always enqueued on the consumer side as if, but not
 You can query executor properties to determine whether or not the executor's
   APIs will block, which tells you whether or not continuation [=attachment=]
   (consumer side) or future [=fulfillment=] (producer side) potentially blocks
-  pending execution (e.g. `inline_executor` semantics). 
+  pending execution (e.g. `inline_executor` semantics).
 
 ## Interactions with Executors ## {#intro_executors}
 
@@ -367,7 +367,7 @@ This work is unification of prior papers written individually by the authors:
 * [[P0701r1]]
 * [[P0783r0]]
 * [[P0904r0]]
- 
+
 # Proposed New Wording # {#wording}
 
 The following wording is purely additive to [the executors proposal](https://github.com/executors/executors).
@@ -790,6 +790,8 @@ template<class Executor>
     <!-- The compile-time requirements are captured by the description of the type `E` in the descriptive variable table -->
 
     **Throws:** If `!execution::query(e, promise_contract_t<T>).second`, throws any exception thrown by `!execution::query(e, oneway_t)`.
+
+    **Postconditions:** For a returned future `f`, `f.get_executor()` returns an executor equality comparable to `e`.
   </td>
 </tr>
 </table>
@@ -898,7 +900,7 @@ template<class Executor>
   <td>`cf.get_executor()`</td>
   <td>`E`</td>
   <td>
-    **Returns:** The executor that the future is bound to.
+    **Returns:** A copy of the executor that the future is bound to.
   </td>
 </tr>
 <tr>
@@ -1079,8 +1081,9 @@ template<class Executor>
 
      Fails at compile-time otherwise.
 
-
-    **Postconditions:** Has no observable affect on `sfh`.
+    **Postconditions:**
+     * Has no observable affect on `sfh`.
+     * For a returned future `f`, `f.get_executor()` returns an executor equality comparable to `e`.
   </td>
 </tr>
 </table>
@@ -1101,7 +1104,7 @@ public:
     explicit promise(Promise&& p);
 
     void set_value(/* see below */) &&;
-    
+
     template <typename Error>
     void set_exception(Error&& err) &&;
 
@@ -1174,7 +1177,7 @@ void promise<void>::set_value() &&;
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
- * *Postconditions:* 
+ * *Postconditions:*
    - `valid() == false`
 
  * *Notes:* `promise::set_value(const T& val) &&` does not participate in overload resolution unless `is_copy_constructible_v<decay_t<T>>`
@@ -1194,7 +1197,7 @@ void set_exception(Error&& err) &&;
 
  * *Throws:* `future_error` with error condition `no_state` if `valid() == false`
 
- * *Postconditions:* 
+ * *Postconditions:*
    - `valid() == false`
 
 <br/>
@@ -1479,7 +1482,7 @@ continuable_future<T, EI> via(EI ex) &&;
 ```
 E get_executor() const;
 ```
- * *Returns:* If is_valid() returns true returns the executor contained within the
+ * *Returns:* If is_valid() is true returns the executor contained within the
     future. Otherwise throws std::future_error.
 
 <br/>
@@ -1649,7 +1652,7 @@ shared_future<T, EI> via(EI ex);
 ```
 E get_executor() const;
 ```
- * *Returns:* If is_valid() returns true returns the executor contained within the
+ * *Returns:* If is_valid() is true returns the executor contained within the
     future. Otherwise throws std::future_error.
 
 <br/>
@@ -1820,7 +1823,7 @@ A `FutureContinuation` object, `fc`, of implementation-defined type such that:
     `F` move-constructed from `forward<F>(f)`.
     The object `ff` is constructed before the return of `on_error` and
     destroyed when `fc` is destroyed.
-* `fc(t)` is ill-formed for any type `T`. 
+* `fc(t)` is ill-formed for any type `T`.
 
 <!--
 
@@ -1870,7 +1873,7 @@ A `FutureContinuation` object, `fc`, of implementation-defined type such that:
     and destroyed when `fc` is destroyed.
 * `fc(exception_tag, e)` is well-formed for objects `e` of type `exception_ptr` and
     has the same effects as `invoke(gg, e)`, where `gg` is an object of type of
-    `G` move-constructed from `forward<G>(g)`. 
+    `G` move-constructed from `forward<G>(g)`.
     The object `gg` is constructed before the return of `on_value_or_error` and
     destroyed when `fc` is destroyed.
 
@@ -1941,7 +1944,7 @@ In the *Return Type* column:
 <blockquote>
 A type that satisfies the `Future` requirements for the value type `R`.
 </blockquote>
-  
+
 **With:**
 
 <blockquote>
@@ -2260,4 +2263,3 @@ template<class Function, class ResultFactory, class SharedFactory>
 
 Replace the same instances in the documentation section below the main code block.
 </blockquote>
-
