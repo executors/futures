@@ -820,8 +820,16 @@ template<class Executor>
   <td>An executor type.</td>
 </tr>
 <tr>
+  <td>`EI`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
   <td>`e`</td>
   <td>A value of type `E`.</td>
+</tr>
+<tr>
+  <td>`ei`</td>
+  <td>A value of type `EI`.</td>
 </tr>
 <tr>
   <td>`T`</td>
@@ -976,8 +984,16 @@ template<class Executor>
   <td>An executor type.</td>
 </tr>
 <tr>
+  <td>`EI`</td>
+  <td>An executor type.</td>
+</tr>
+<tr>
   <td>`e`</td>
   <td>A value of type `E`.</td>
+</tr>
+<tr>
+  <td>`ei`</td>
+  <td>A value of type `EI`.</td>
 </tr>
 <tr>
   <td>`T`</td>
@@ -1080,7 +1096,7 @@ template<class Executor>
     **Effect:** Returns an implementation-defined `ContinuableFuture` onto which continuations can be attached that will run on `e`.
 
     **Success:** Succeeds if:
-     * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
+     * `e` is a `ThenExecutor` where `execution::query(e, promise_contract_t{})` or `execution::query(e, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
      * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
      Fails at compile-time otherwise.
@@ -1300,18 +1316,18 @@ explicit semi_future(const shared_future<T, E>& rhs);
 
 <br/>
 ```
-continuable_future<T, EI> via(EI ex) &&;
+continuable_future<T, EI> via(EI ei) &&;
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
     on which continuations will be enqueued to a new executor.
 
- * *Returns:* A continuable_future modified to carry executor ex of
+ * *Returns:* A continuable_future modified to carry executor ei of
     type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
-   * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+   * `ei` is a `ThenExecutor` where `execution::query(ei, promise_contract_t{})` or `execution::query(ei, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
+   * `ei` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* valid() == false.
 
@@ -1638,17 +1654,17 @@ ReturnFuture then(F&&);
 
 <br/>
 ```
-shared_future<T, EI> via(EI ex);
+shared_future<T, EI> via(EI ei);
 ```
 
  * *Effects:* Returns a new future that will complete when this completes but
       on which continuations will be enqueued to a new executor.
 
- * *Returns:* A shared_future modified to carry executor ex of type EI.
+ * *Returns:* A shared_future modified to carry executor ei of type EI.
 
  * *Requires:*
-   * `e` is a `ThenExecutor` where `execution::query(ex, promise_contract_t{})` or `execution::query(ex, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
-   * `e` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
+   * `ei` is a `ThenExecutor` where `execution::query(ei, promise_contract_t{})` or `execution::query(ei, cancellable_promise_contract_t{ cancel })` is well-formed for some function `cancel`.
+   * `ei` is a `OnewayExecutor` or is convertible to a OnewayExecutor.
 
  * *Postconditions:* No observable change to \*this.
 
