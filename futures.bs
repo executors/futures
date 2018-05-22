@@ -452,7 +452,8 @@ The following wording is purely additive to [the executors proposal](https://git
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
 
 ```
-namespace std::execution {
+namespace std {
+namespace execution {
 
 struct exception_arg_t { explicit exception_arg_t() = default; };
 
@@ -479,7 +480,7 @@ template <typename F, typename T>
   inline constexpr bool is_future_continuation_v
     = is_future_continuation<F, T>::value;
 
-}
+}}
 ```
 
 1.  A <dfn>future continuation</dfn> is a <a href="eel.is/c++draft/func.def">callable object</a> that consumes the value of a [=future=].
@@ -537,7 +538,18 @@ struct is_future_continuation;
 
 ## `Promise` Requirements ## {#wording_promise}
 
-#. A `Promise` type for value type `T` and error type `E`  shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
+```
+namespace std {
+namespace execution {
+
+template <class T> struct promise_value;
+template <class T>
+using promise_value_t = promise_value<T>::type;
+
+}}
+```
+
+1. A `Promise` type for value type `T` shall meet the `MoveConstructible` requirements, the `MoveAssignable` requirements, and the requirements described in the Tables below.
 
 Descriptive Variable Definitions
 
@@ -711,6 +723,20 @@ template<class Executor>
 ## `SemiFuture` Requirements ## {#wording_semi_future}
 
 <!-- Based on [container.requirements], [utility.arg.requirements], [thread.req.lockable], and [allocator.requirements] -->
+
+```
+namespace std {
+namespace execution {
+
+template <class T> struct future_value;
+template <class T>
+using future_value_t = future_value<T>::type;
+
+template <class T> struct future_exception;
+template <class T>
+using future_exception_t = future_exception<T>::type;
+}}
+```
 
 1. A <dfn>semi future</dfn> is an object that can be bound to an executor to produce a [=future=].
 
@@ -2162,7 +2188,7 @@ When invoked, this continuation stores the result in the outer future's
 *Returns:*
 A value whose type satisfies the `ContinuableFuture` requirements.
 The returned future is [=fulfilled=] when `f1()` completes execution, with
-  the result of `f1()` (if `decltype(f1())` is non-`void`), valueless completion
+  the result of `f1()` (if `decltype(f1())` is non-void), valueless completion
   (if `decltype(f1())` is `void`), or any exception thrown by `f1()`.
 </blockquote>
 
@@ -2211,7 +2237,7 @@ When invoked, this continuation stores the result in the outer future's
 <blockquote>
 A value whose type satisfies the `ContinuableFuture` requirements.
 The returned future is [=fulfilled=] when `f1()` completes execution, with
-  the result in `r1` (if `decltype(rf1())` is non-`void`), valueless completion
+  the result in `r1` (if `decltype(rf1())` is non-void), valueless completion
   (if `decltype(rf1())` is void), or any exception thrown by an invocation `f1`.
 </blockquote>
 
