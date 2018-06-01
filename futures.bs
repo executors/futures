@@ -258,11 +258,11 @@ class simple_ready_continuable_future {
       auto cancel = [this] { handle_cancellation(); };
       // Construct the promise/future pair with the cancellation callback
       // so that the executor can propagate cancellation
-      auto [promise, contractFuture] =
+      auto [promise, contract_future] =
         execution::query(ex, cancellable_promise_contract_t{ cancel });
       // Create the dependent task and the new future representing it
       auto taskFuture =
-        executor.then_execute(std::forward<F>(func), std::move(contractFuture));
+        executor.then_execute(std::forward<F>(func), std::move(contract_future));
       // Satisfy the promise immediately because this is a ready future
       promise.set_value(std::move(data_));
 
