@@ -235,20 +235,44 @@ For example, `on_value_or_error(f, g)` takes two callables (a on-value
 
 This paper proposes a way to hook a [=cancellation notifier=] into a future/promise pair, using `cancellable_promise_contract_t`.
 It allows for authors of future types to support cancellation if they want to, and to correctly hook into the cancellation mechanisms
-of other futures they interoperate with - such as inside `.via`, where the implementation can create a future/promise pair that will,
+of other futures they interoperate with - such as inside `.via` and `.then`, where the implementation can create a future/promise pair that will,
 on cancellation, invoke a function that will cancel the current future.
 
-A sample implementation of `.via` could be as follows:
+A sample implementation of `.via` and the corresponding `.then` could be as
+follows (assuming immediately ready futures to simplify the data model):
 
 ```
-template <typename Executor>
-auto via(Executor && ex) &&
-{
-    auto cancel = [this] { handle_cancellation(); };
-    auto [promise, future] = execution::query(ex, cancellable_promise_contract_t{ cancel });
-    then([promise = std::move(promise)](auto value) { promise.set_value(std::move(value)); });
-    return future;
-}
+template<typename T, typename Executor>
+class simple_ready_continuable_future {
+  template <typename NewExecutor>
+  auto via(NewExecutor && ex) &&
+  {
+      // Convert this future to a new future carrying the passed executor
+      return simple_ready_continuable_future<T, NewExecutor>{
+        std::move(data_), std::forward<NewExecutor>(ex)};
+  }
+
+  template <typename F>
+  auto then(F&& func) {
+      // Create the cancellation callback
+      auto cancel = [this] { handle_cancellation(); };
+      // Construct the promise/future pair with the cancellation callback
+      // so that the executor can propagate cancellation
+      auto [promise, contractFuture] =
+        execution::query(ex, cancellable_promise_contract_t{ cancel });
+      // Create the dependent task and the new future representing it
+      auto taskFuture =
+        executor.then_execute(std::forward<F>(func), std::move(contractFuture));
+      // Satisfy the promise immediately because this is a ready future
+      promise.set_value(std::move(data_));
+
+      return taskFuture;
+  }
+
+  private:
+  T data_;
+  Executor exec_;
+};
 ```
 
 We are currently not proposing a concrete cancellation API; we plan to do that in a future revision of the paper. At this time, there is
