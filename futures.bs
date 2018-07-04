@@ -1153,7 +1153,7 @@ using future_exception_t = future_exception<T>::type;
 
     **Postconditions:**
      * Has no observable affect on `sfh`.
-     * For a returned future `f`, `f.get_executor()` returns an executor that compares equal to`e`.
+     * For a returned future `f`, `f.get_executor()` returns an executor that compares equal to `e`.
   </td>
 </tr>
 </table>
