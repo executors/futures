@@ -80,11 +80,11 @@ David, Bryce: We should have a lexicon document.
 - David: This may be needed for sub-executors.
 - Bryce: One thing to note is that IIUC Jared's Agency passes through a descriptor of the shape of execution agents to its `Receiver`.
 - Bryce: This would also allow asynchronous `Receiver`s to place requirements on their executor.
-- Bryce: Maybe these would be spelled as two methods, but I'd imagine that calling submit on a `NoneReceiver` would execute it and calling submit on an `ExecutorReceiver` would enqueue work.
+- Bryce: Maybe these would be spelled as two methods, but I'd imagine that calling `submit` on a `NoneReceiver` would execute it and calling `submit` on an `ExecutorReceiver` would enqueue work.
 - Kirk: Work construction is done in the constructor of the sender.
 - Bryce: Not sure /that/ fits my mental model, but will think about it.
 - Bryce: New thread executor from pushmi.
-- Kirk, Bryce: You get stuff out of futures by calling submit.
+- Kirk, Bryce: You get stuff out of futures by calling `submit`.
 
 #### (from David) Generic parallel algorithms
 
