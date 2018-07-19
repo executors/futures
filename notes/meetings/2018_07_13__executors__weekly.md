@@ -280,7 +280,7 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 - Jared: I could be okay with requiring this for then_execute.
 - **Bryce: What I would want is to be able to `via` the value and error method separately. I want to be able to say `via(cpu).on_error(f), via(gpu).on_value(g)`.**
 - Jared: That's what I want.
-- Bryce: I need some before after examples
+- Bryce: I need some before/after examples.
 - **Bryce: Does error propagation in P0443 chain properly? If it's broken we need an example of how.**
 
 
