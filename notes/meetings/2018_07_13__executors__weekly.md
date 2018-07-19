@@ -65,7 +65,7 @@ Receiver<T> on_value_or_error(Callable<T> value_f, Callable<T> error_f);
 ```
 
 
-**Ask #0:** A receiver's error method should take a generic `SemiMovable` error type instead of an `std::exception_ptr`.
+**Ask #0:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
 ```
 // Before:
 struct Receiver {
@@ -84,6 +84,7 @@ struct Receiver {
 ```
 
 - Bryce: Places additional burden on authors of receiver.
+- Kirk: The error type should be required to be `SemiMovable`.
 - Jared: Would you be able to just write an overload for one concrete type?
 - Bryce: This is related to whether the error method should be required.
 - Bryce: Two options if no error method matches:
