@@ -415,7 +415,7 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 auto g = exec.then_execute(on_value([] { /* ... */ }), pred);
 ```
 
-- Lee: Increases consistency.
+- Lee: This increases consistency.
 - Jared: If both cases are required, I agree. Otherwise, I'd prefer the normal case to just be the call operator
 
 #### (from Chris K) `then_execute` alternatives
