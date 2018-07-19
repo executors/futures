@@ -205,6 +205,7 @@ struct Receiver {
 - Bryce: That makes error handling inconsistency in generic code.
 - Bryce: Idea - have two channels (or a way to signal error category) on receivers.
 
+
 **Ask #4:** Receivers should be required to have both the value method and the error method.
 
 ```
