@@ -79,18 +79,20 @@ auto g = exec.then_execute(on_value([] { /* ... */ }, pred));
 ///////////////////////////////////////////////////////////////////////////////
 // After (with Ask 1 and Ask 4):
 // `execute` takes:
-struct VoidNoneReceiver /* AKA a `Callable` */ {
+struct VoidNoneReceiver {
+  // BOTH of these are required (NOT satisfied by `Callable`s):
   void done();
   void error(exception_arg_t, std::exception_ptr error);
 };
 // `twoway_execute` takes:
-struct NoneReceiver /* AKA a `Callable` */ {
+struct NoneReceiver {
+  // BOTH of these are required (NOT satisfied by `Callable`s):
   U done();
   U error(exception_arg_t, std::exception_ptr error);
 };
 // `then_execute` takes:
 struct Receiver {
-  // At least one of these is required (satisfied by `Callable`s):
+  // BOTH of these are required (NOT satisfied by `Callable`s):
   U value(T value);
   U error(exception_arg_t, std::exception_ptr error);
 };
