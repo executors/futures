@@ -43,7 +43,10 @@ David, Bryce: We should have a lexicon document.
 
 #### Debriefing from discussion of proposed `Receiver`-related changes to P0443 and P1054
 
-Ask #0 (TODO):
+**Ask 1:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
+
+[EXECUTORS ISSUE #409](https://github.com/executors/executors/issues/409)
+
 - Mathias: We may want an infallible future.
 - Kirk: Haven't written up what the concept tree for something like this would look like. I don't think it's a good design.
 - Mathias: Subsumption goes in the opposite direction than for `Receiver`s.
@@ -53,7 +56,11 @@ Ask #0 (TODO):
 - Kirk: You need this to be able to propagate.
 - Gordon: Receiver needs to always be able to accept an error, but won't always receive one.
 
-Ask #4 (TODO):
+
+**Ask 4:** Receivers should be required to have both the value method and the error method.
+
+[EXECUTORS ISSUE #412](https://github.com/executors/executors/issues/412)
+
 - Bryce: Right now the default is to propagate errors if no error method is required.
 - Bryce: Why should we require an error method instead of defaulting to propagate.
 - Kirk: If you librarize your `Receiver`s, you probably have to deal with this in one place, and you probably had to anyways.
@@ -61,11 +68,15 @@ Ask #4 (TODO):
 - Bryce: Do all `Executor`s, even those that do not care about errors, have to propagate today? Do we want that requirement? Or do we want it to fail to compile?
 - Mathias: I think it should fail to compile.
 - Gordon, Bryce: I agree.
-- Consensus: Try out Mathias' `Fallible`/`Infallible` approach.
+- **Consensus: Try out Mathias' `Fallible`/`Infallible` approach.**
 
-Ask #5 (TODO):
-- Lee: Working on examples.
-- Bryce: Will add an ARB for you.
+
+**Ask 5:** Non-dependent execution functions should take `Callable`s that take an `Executor` parameter instead of nullary `Callable`s.
+
+[EXECUTORS ISSUE #413](https://github.com/executors/executors/issues/413)
+
+- **Lee: Working on examples.**
+- Bryce: Will add an action item for you.
 - David: This may be needed for sub-executors.
 - Bryce: One thing to note is that IIUC Jared's Agency passes through a descriptor of the shape of execution agents to its `Receiver`.
 - Bryce: This would also allow asynchronous `Receiver`s to place requirements on their executor.

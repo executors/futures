@@ -66,6 +66,9 @@ Receiver<T> on_value_or_error(Callable<T> value_f, Callable<T> error_f);
 
 
 **Ask 0:** A receiver's error method shouldn't be an overload of the value method.
+
+[EXECUTORS ISSUE #408](https://github.com/executors/executors/issues/408)
+
 ```
 // Before:
 struct Receiver {
@@ -88,6 +91,9 @@ struct Receiver {
 
 
 **Ask 1:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
+
+[EXECUTORS ISSUE #409](https://github.com/executors/executors/issues/409)
+
 ```
 // Before:
 struct Receiver {
@@ -117,6 +123,8 @@ struct Receiver {
 
 **Ask 2:** The value and error methods of a receiver should not be required to have the same return type.
 
+[EXECUTORS ISSUE #410](https://github.com/executors/executors/issues/410)
+
 ```
 // Before:
 struct Receiver {
@@ -144,6 +152,9 @@ struct Receiver {
 
 
 **Ask 3:** All execution functions should take receivers (AKA how do executors deal with asynchronous system errors and allow users to customize that handling?).
+
+[EXECUTORS ISSUE #411](https://github.com/executors/executors/issues/411)
+
 ```
 // Before:
 // `execute` takes:
@@ -207,6 +218,8 @@ struct Receiver {
 
 
 **Ask 4:** Receivers should be required to have both the value method and the error method.
+
+[EXECUTORS ISSUE #412](https://github.com/executors/executors/issues/412)
 
 ```
 // Before:
@@ -286,6 +299,8 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 
 **Ask 5:** Non-dependent execution functions should take `Callable`s that take an `Executor` parameter instead of nullary `Callable`s.
 
+[EXECUTORS ISSUE #413](https://github.com/executors/executors/issues/413)
+
 ```
 // Before:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
@@ -319,6 +334,8 @@ exec.execute([] (Executor e) { /* ... */ });
 
 
 **Ask 6:** Receiver's value method shouldn't be the call operator.
+
+[EXECUTORS ISSUE #414](https://github.com/executors/executors/issues/414)
 
 ```
 // Before:
