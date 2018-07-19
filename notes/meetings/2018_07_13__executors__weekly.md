@@ -284,7 +284,7 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 - **Bryce: Does error propagation in P0443 chain properly? If it's broken we need an example of how.**
 
 
-**Ask 5:** `execute` should take `Callable`s that take an `Executor` parameter instead of `VoidNoneReceiver`s.
+**Ask 5:** Non-dependent execution functions should take `Callable`s that take an `Executor` parameter instead of nullary `Callable`s.
 
 ```
 // Before:
@@ -300,9 +300,7 @@ exec.execute([] { /* ... */ });
 
 // After:
 struct ExecutorReceiver {
-  // At least one of these is required:
-  U operator()(Executor exec);
-  U operator()(exception_arg_t, std::exception_ptr error);
+  void operator()(Executor exec);
 };
 struct OneWayExecutor {
   void execute(ExecutorReceiver r);
