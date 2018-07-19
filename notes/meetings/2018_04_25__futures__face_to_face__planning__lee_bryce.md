@@ -7,7 +7,7 @@ Pre Face-to-Face 2018-04-26 at NVIDIA - Notes - 2018-04-25
 **Kindly forgive and identify any mistakes and omissions in these minutes.**
 
 Attendees:
-- Bryce Adelstein Lelbach (Minute Taker)
+- Bryce Adelstein Lelbach (Note Taker)
 - Lee Howes
 
 Discussed the following things not relating to the face to face meeting at NVIDIA tomorrow:
