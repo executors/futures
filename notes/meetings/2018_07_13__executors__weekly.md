@@ -90,7 +90,7 @@ struct Receiver {
 - Bryce: Two options if no error method matches:
   - Compile fail.
   - Propagate.
-- Chris K: Impact on polymorphic executor?
+- Chris K: What's the impact on the polymorphic executor?
 
 
 **Ask #1:** A receiver's error method shouldn't be an overload of the value method.
