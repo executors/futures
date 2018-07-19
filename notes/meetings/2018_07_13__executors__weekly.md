@@ -194,6 +194,7 @@ struct Receiver {
 - Bryce: If you don't always use the error method, changes in the implementation of an executor can change the error handling path. I think the error method would always have to be used.
 - Lee: Not just about launch errors, also things like shutdown, migration, cancellation, etc.
 - Chris K: We want two channels, one for dependency errors, one for system.
+- **Bryce: Idea - have two channels (or a way to signal error category) on receivers.**
 - Lee: What if the preceding task forwarded the error to it's dependency?
 - Bryce: Two questions for Jared and Chris K:
   - Should we provide some way of providing an error handling hook for asynchronous system errors?
@@ -203,7 +204,6 @@ struct Receiver {
 - Lee, Kirk: This is needed for error propagation if we rebase `then_execute` on execute.
 - Bryce: So a non- or maybe-blocking executor may choose to, but doesn't have to, report system failures (shutdown, launch failure, etc) that occur after the execution function returns via the receiver's error method?
 - Bryce: That makes error handling inconsistency in generic code.
-- Bryce: Idea - have two channels (or a way to signal error category) on receivers.
 
 
 **Ask #4:** Receivers should be required to have both the value method and the error method.
