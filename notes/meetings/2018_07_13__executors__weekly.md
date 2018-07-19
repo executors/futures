@@ -65,7 +65,29 @@ Receiver<T> on_value_or_error(Callable<T> value_f, Callable<T> error_f);
 ```
 
 
-**Ask #0:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
+**Ask #0:** A receiver's error method shouldn't be an overload of the value method.
+```
+// Before:
+struct Receiver {
+  // At least one of these is required (satisfied by `Callable`s):
+  U operator()(T value);
+  U operator()(exception_arg_t, std::exception_ptr error);
+};
+
+
+// After:
+struct Receiver {
+  // At least one of these is required (satisfied by `Callable`s):
+  U operator()(T value);
+  U error(std::exception_ptr ptr);
+};
+```
+
+- Bryce, Lee: As P1053 points out, it's very easy today to accidentally forget the `exception_arg_t` parameter when writing your error method. You'll then be surprised when your code compiles, but your "error" method is never called.
+- **There was consensus to accept this.**
+
+
+**Ask #1:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
 ```
 // Before:
 struct Receiver {
@@ -91,28 +113,6 @@ struct Receiver {
   - Compile fail.
   - Propagate.
 - Chris K: What's the impact on the polymorphic executor?
-
-
-**Ask #1:** A receiver's error method shouldn't be an overload of the value method.
-```
-// Before:
-struct Receiver {
-  // At least one of these is required (satisfied by `Callable`s):
-  U operator()(T value);
-  U operator()(exception_arg_t, std::exception_ptr error);
-};
-
-
-// After:
-struct Receiver {
-  // At least one of these is required (satisfied by `Callable`s):
-  U operator()(T value);
-  U error(std::exception_ptr ptr);
-};
-```
-
-- Bryce, Lee: As P1053 points out, it's very easy today to accidentally forget the `exception_arg_t` parameter when writing your error method. You'll then be surprised when your code compiles, but your "error" method is never called.
-- **There was consensus to accept this.**
 
 
 **Ask #2:** The value and error methods of a receiver should not be required to have the same return type.

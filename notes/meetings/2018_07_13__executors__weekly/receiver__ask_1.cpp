@@ -1,8 +1,8 @@
 // Proposed `Receiver`-related changes to P0443 based on P1053/P1055
 // Reply-To: Bryce Adelstein Lelbach <brycelelbach@gmail.com>
 
-// Ask #1: A receiver's error method shouldn't be an overload of the value
-// method.
+// Ask #1: A receiver's error method should take a generic error type instead
+// of an `std::exception_ptr`.
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before:
@@ -17,6 +17,6 @@ struct Receiver {
 struct Receiver {
   // At least one of these is required (satisfied by `Callable`s):
   U operator()(T value);
-  U error(std::exception_ptr ptr);
+  U operator()(exception_arg_t, E error);
 };
 
