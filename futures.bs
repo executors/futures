@@ -688,7 +688,7 @@ requirements and the second is a token type that `e` will interpret as a valid
 future parameter to calls to `then_execute` or `bulk_then_execute`.
 
 ```
-template <T, C>
+template <typename T, typename C>
 struct cancellable_promise_contract_t
 {
   static constexpr bool is_requirable = false;
