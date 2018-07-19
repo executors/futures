@@ -201,7 +201,7 @@ struct Receiver {
   - Would you feel differently about this if there was a way to distinguish the error category (system or predecessor)?
 - Jared: Could this be done with properties?
 - Lee, Kirk: Executors do not have to report system errors with the error method even if it exists.
-- Lee, Kirk: This is needed for error propagation if we rebase `then_execute` on execute.
+- Lee, Kirk: This is needed for error propagation if we rebase `then_execute` on `execute`.
 - Bryce: So a non- or maybe-blocking executor may choose to, but doesn't have to, report system failures (shutdown, launch failure, etc) that occur after the execution function returns via the receiver's error method?
 - Bryce: That makes error handling inconsistency in generic code.
 
