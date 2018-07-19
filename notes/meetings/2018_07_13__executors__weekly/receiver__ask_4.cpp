@@ -1,7 +1,7 @@
 // Proposed `Receiver`-related changes to P0443 based on P1053/P1055
 // Reply-To: Bryce Adelstein Lelbach <brycelelbach@gmail.com>
 
-// Ask #4: Receivers should be required to have both the value method and the
+// Ask 4: Receivers should be required to have both the value method and the
 // error method. P1054-style helper functions should be added to ease
 // construction of receivers.
 
@@ -29,10 +29,10 @@ auto f = exec.then_execute(on_value([] { /* ... */ }), pred);
 ///////////////////////////////////////////////////////////////////////////////
 
 // NOTE: This would apply to all execution functions and all types of receivers
-// if ask #3 is accepted.
+// if Ask 3 is accepted.
 
 ///////////////////////////////////////////////////////////////////////////////
-// Before (with ask #3):
+// Before (with Ask 3):
 // `execute` takes:
 struct VoidNoneReceiver {
   // At least one of these is required (satisfied by `Callable`s):
@@ -50,7 +50,7 @@ exec.execute([] { /* ... */ });
 auto f = exec.twoway_execute([] { /* ... */ });
 
 ///////////////////////////////////////////////////////////////////////////////
-// After (with ask #3):
+// After (with Ask 3):
 // `execute` takes:
 struct VoidNoneReceiver {
   // BOTH of these are required (NOT satisfied by `Callable`s):

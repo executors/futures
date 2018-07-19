@@ -1,7 +1,7 @@
 // Proposed `Receiver`-related changes to P0443 based on P1053/P1055
 // Reply-To: Bryce Adelstein Lelbach <brycelelbach@gmail.com>
 
-// Ask #3: All execution functions should take receivers. A non- or
+// Ask 3: All execution functions should take receivers. A non- or
 // maybe-blocking executor may choose to report system failures (shutdown,
 // launch failure, etc) that occur after the execution function returns via the
 // receiver's error method.

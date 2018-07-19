@@ -65,7 +65,7 @@ Receiver<T> on_value_or_error(Callable<T> value_f, Callable<T> error_f);
 ```
 
 
-**Ask #0:** A receiver's error method shouldn't be an overload of the value method.
+**Ask 0:** A receiver's error method shouldn't be an overload of the value method.
 ```
 // Before:
 struct Receiver {
@@ -87,7 +87,7 @@ struct Receiver {
 - **There was consensus to accept this.**
 
 
-**Ask #1:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
+**Ask 1:** A receiver's error method should take a generic error type instead of an `std::exception_ptr`.
 ```
 // Before:
 struct Receiver {
@@ -115,7 +115,7 @@ struct Receiver {
 - Chris K: What's the impact on the polymorphic executor?
 
 
-**Ask #2:** The value and error methods of a receiver should not be required to have the same return type.
+**Ask 2:** The value and error methods of a receiver should not be required to have the same return type.
 
 ```
 // Before:
@@ -143,7 +143,7 @@ struct Receiver {
 - **Lee: I will come back with examples.**
 
 
-**Ask #3:** All execution functions should take receivers (AKA how do executors deal with asynchronous system errors and allow users to customize that handling?).
+**Ask 3:** All execution functions should take receivers (AKA how do executors deal with asynchronous system errors and allow users to customize that handling?).
 ```
 // Before:
 // `execute` takes:
@@ -206,7 +206,7 @@ struct Receiver {
 - Bryce: That makes error handling inconsistency in generic code.
 
 
-**Ask #4:** Receivers should be required to have both the value method and the error method.
+**Ask 4:** Receivers should be required to have both the value method and the error method.
 
 ```
 // Before:
@@ -230,9 +230,9 @@ struct Receiver {
 auto f = exec.then_execute(on_value([] { /* ... */ }), pred);
 ```
 
-Note that this would apply to all execution functions and all types of receivers if ask #3 is accepted:
+Note that this would apply to all execution functions and all types of receivers if Ask 3 is accepted:
 ```
-// Before (with ask #3):
+// Before (with Ask 3):
 // `execute` takes:
 struct VoidNoneReceiver {
   // At least one of these is required (satisfied by `Callable`s):
@@ -250,7 +250,7 @@ exec.execute([] { /* ... */ });
 auto f = exec.twoway_execute([] { /* ... */ });
 
 
-// After (with ask #3):
+// After (with Ask 3):
 // `execute` takes:
 struct VoidNoneReceiver {
   // BOTH of these are required (NOT satisfied by `Callable`s):
@@ -270,7 +270,7 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 ```
 
 - Bryce: Presumably, P1054-style helper functions would also be added to ease construction of receivers.
-- Bryce: This would mean that `(bulk_)then_execute` could no longer be passed a regular `Callable` (a lambda, etc). When combined with ask #3, this would mean ALL execution function swould no longer be passed a regular `Callable`.
+- Bryce: This would mean that `(bulk_)then_execute` could no longer be passed a regular `Callable` (a lambda, etc). When combined with Ask 3, this would mean ALL execution function swould no longer be passed a regular `Callable`.
 - Bryce: I don't understand how this is needed for exception propagation. It just moves the burden out of the executor, to the receiver or the user of the executor.
 - Lee: The error method should only be required if it's used.
 - Kirk: I think it should always be required.
@@ -283,7 +283,8 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 - Bryce: I need some before after examples
 - **Bryce: Does error propagation in P0443 chain properly? If it's broken we need an example of how.**
 
-**Ask #5:** `execute` should take `Callable`s that take an `Executor` parameter instead of `VoidNoneReceiver`s.
+
+**Ask 5:** `execute` should take `Callable`s that take an `Executor` parameter instead of `VoidNoneReceiver`s.
 
 ```
 // Before:
@@ -319,7 +320,7 @@ exec.execute([] (Executor e) { /* ... */ });
 - **Bryce: Kirk, Lee - Would you be fine with this being optional, not required?**
 
 
-**Ask #6:** Receiver's value method shouldn't be the call operator.
+**Ask 6:** Receiver's value method shouldn't be the call operator.
 
 ```
 // Before:
@@ -365,9 +366,9 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 auto g = exec.then_execute(on_value([] { /* ... */ }), pred);
 ```
 
-Note that this change makes the most sense if done in conjunction with ask #1 and ask #4:
+Note that this change makes the most sense if done in conjunction with Ask 1 and Ask 4:
 ```
-// Before (with ask #1 and ask #4):
+// Before (with Ask 1 and Ask 4):
 // `execute` takes:
 struct VoidNoneReceiver {
   // BOTH of these are required (NOT satisfied by `Callable`s):
@@ -392,7 +393,7 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 auto g = exec.then_execute(on_value([] { /* ... */ }, pred));
 
 
-// After (with ask #1 and ask #4):
+// After (with Ask 1 and Ask 4):
 // `execute` takes:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
   void done();

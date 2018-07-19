@@ -1,7 +1,7 @@
 // Proposed `Receiver`-related changes to P0443 based on P1053/P1055
 // Reply-To: Bryce Adelstein Lelbach <brycelelbach@gmail.com>
 
-// Ask #6: Receiver's value method shouldn't be the call operator.
+// Ask 6: Receiver's value method shouldn't be the call operator.
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before:
@@ -48,11 +48,11 @@ auto g = exec.then_execute(on_value([] { /* ... */ }), pred);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// NOTE: This change makes the most sense if done in conjunction with ask #1 and
-// ask #4.
+// NOTE: This change makes the most sense if done in conjunction with Ask 1 and
+// Ask 4.
 
 ///////////////////////////////////////////////////////////////////////////////
-// Before (with ask #1 and ask #4):
+// Before (with Ask 1 and Ask 4):
 // `execute` takes:
 struct VoidNoneReceiver {
   // BOTH of these are required (NOT satisfied by `Callable`s):
@@ -77,7 +77,7 @@ auto f = exec.twoway_execute(on_value([] { /* ... */ }));
 auto g = exec.then_execute(on_value([] { /* ... */ }, pred));
 
 ///////////////////////////////////////////////////////////////////////////////
-// After (with ask #1 and ask #4):
+// After (with Ask 1 and Ask 4):
 // `execute` takes:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
   void done();
