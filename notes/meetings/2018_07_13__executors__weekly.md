@@ -86,7 +86,7 @@ struct Receiver {
 - Bryce: Places additional burden on authors of receiver.
 - Jared: Would you be able to just write an overload for one concrete type?
 - Bryce: This is related to whether the error method should be required.
-- Two options if no error method matches:
+- Bryce: Two options if no error method matches:
   - Compile fail.
   - Propagate.
 - Chris K: Impact on polymorphic executor?
