@@ -1,7 +1,7 @@
 ISO C++ Futures
 ===============
 
-Weekly US Timezone Meeting - Notes - 2018-07-18
+Weekly US Timezone Meeting - Notes - 2018-07-13
 -----------------------------------------------
 
 **Kindly forgive and identify any mistakes and omissions in these notes.**
@@ -12,7 +12,6 @@ Attending:
 - David Hollman
 - Jared Hoberock
 - Lee Howes
-- Mathias Stearn
 - **???**
 
 Agenda:
