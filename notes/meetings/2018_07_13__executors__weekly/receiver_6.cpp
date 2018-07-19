@@ -5,7 +5,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before:
-
 // `execute` takes:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
   void operator()();
@@ -27,7 +26,6 @@ auto f = exec.then_execute([] { /* ... */ }, pred);
 
 ///////////////////////////////////////////////////////////////////////////////
 // After:
-
 // `execute` takes:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
   void done();
@@ -55,7 +53,6 @@ auto g = exec.then_execute(on_value([] { /* ... */ }), pred);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before (with ask #1 and ask #4):
-
 // `execute` takes:
 struct VoidNoneReceiver {
   // BOTH of these are required (NOT satisfied by `Callable`s):
@@ -81,7 +78,6 @@ auto g = exec.then_execute(on_value([] { /* ... */ }, pred));
 
 ///////////////////////////////////////////////////////////////////////////////
 // After (with ask #1 and ask #4):
-
 // `execute` takes:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
   void done();

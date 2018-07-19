@@ -8,7 +8,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before:
-
 // `execute` takes:
 struct VoidNoneReceiver /* AKA a `Callable` */ {
   void operator()();
@@ -26,7 +25,6 @@ struct Receiver {
 
 ///////////////////////////////////////////////////////////////////////////////
 // After:
-
 // `execute` takes:
 struct VoidNoneReceiver {
   // At least one of these is required (satisfied by `Callable`s):

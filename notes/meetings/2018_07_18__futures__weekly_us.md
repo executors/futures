@@ -20,17 +20,21 @@ Agenda:
 - Discuss parallel algorithms and executors interactions (David's emails).
 
 Initial PR Plan ([repository, WIP](github.com/brycelelbach/executors)):
-- Add `None`/`SingleReceiver` concept and replace raw callables/continuations with it
+- 0) Add `None`/`SingleReceiver` concepts and replace raw callables/continuations with it
   - Status: Under discussion by executors group.
   - [EXECUTORS ISSUE #]()
-- Add P1054 style `Receiver` wrappers.
+- 1) Add P1054 style `Receiver` wrappers.
   - Status: TODO.
-- Add `None`/`SingleSender`.
+- 2) Add `None`/`SingleSender` concepts.
   - Status: TODO.
-- Replace `then_execute` with `via_execute`
-  - (as member function, transition to a customization point later).
+- 3) Replace `then_execute` with `via_execute` or an alternative.
+  - (as member function or property, transition to a customization point later).
   - Status: TODO.
-- Drop two-way execution interfaces.
+- 4) Refactor two-way execution in terms of one-way execution.
+  - Status: TODO.
+- 5) Refactor bulk execution in terms of one-way execution.
+  - Status: TODO.
+- 6) Replace executor concepts with sender concepts.
   - Status: TODO.
 
 ### Discussion

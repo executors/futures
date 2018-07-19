@@ -33,7 +33,6 @@ auto f = exec.then_execute(on_value([] { /* ... */ }), pred);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before (with ask #3):
-
 // `execute` takes:
 struct VoidNoneReceiver {
   // At least one of these is required (satisfied by `Callable`s):
@@ -51,8 +50,7 @@ exec.execute([] { /* ... */ });
 auto f = exec.twoway_execute([] { /* ... */ });
 
 ///////////////////////////////////////////////////////////////////////////////
-// After (with ask #2):
-
+// After (with ask #3):
 // `execute` takes:
 struct VoidNoneReceiver {
   // BOTH of these are required (NOT satisfied by `Callable`s):

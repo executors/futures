@@ -1,10 +1,10 @@
 // Proposed `Receiver`-related changes to P0443 based on P1053/P1055
 // Reply-To: Bryce Adelstein Lelbach <brycelelbach@gmail.com>
 
-// Ask #5: `execute` should take `ExecutorReceiver`s (e.g. receivers that take
-// `Executor`s as their value) instead of `VoidNoneReceiver`s. An executor is
-// free to pass any `Executor` to a `ExecutorReceiver`, not necessarily
-// themselves.
+// Ask #5: `execute` should take `ExecutorReceiver`s (e.g. `Callable`s that
+// take an `Executor` parameter) instead of `VoidNoneReceiver`s (nullary
+// `Callable`s). An executor is free to pass any `Executor` to a
+// `ExecutorReceiver`, not necessarily themselves.
 
 ///////////////////////////////////////////////////////////////////////////////
 // Before:
@@ -15,7 +15,7 @@ struct OneWayExecutor {
   void execute(VoidNoneReceiver r);
 };
 
-exec.execute([] () { /* ... */ });
+exec.execute([] { /* ... */ });
 
 ///////////////////////////////////////////////////////////////////////////////
 // After:
