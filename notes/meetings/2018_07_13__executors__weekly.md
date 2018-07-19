@@ -193,7 +193,7 @@ struct Receiver {
 - Jared: Is an executor allowed to throw for synchronous errors? Or does it have to use the error method?
 - Bryce: If you don't always use the error method, changes in the implementation of an executor can change the error handling path. I think the error method would always have to be used.
 - Lee: Not just about launch errors, also things like shutdown, migration, cancellation, etc.
-- Chris K: We want two channels, one for dependency errors, one for system.
+- Chris K: We want two channels, one for dependency errors, one for system errors.
 - **Bryce: Idea - have two channels (or a way to signal error category) on receivers.**
 - Lee: What if the preceding task forwarded the error to it's dependency?
 - Bryce: Two questions for Jared and Chris K:
