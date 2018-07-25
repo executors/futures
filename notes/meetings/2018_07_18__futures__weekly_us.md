@@ -22,7 +22,13 @@ Agenda:
 Initial PR Plan ([repository, WIP](github.com/brycelelbach/executors)):
 - 0) Add `None`/`SingleReceiver` concepts and replace raw callables/continuations with it
   - Status: Under discussion by executors group.
-  - [EXECUTORS ISSUE #]()
+  - Futures Ask 0, [EXECUTORS ISSUE #408](https://github.com/executors/executors/issues/408)
+  - Futures Ask 1, [EXECUTORS ISSUE #409](https://github.com/executors/executors/issues/409)
+  - Futures Ask 2, [EXECUTORS ISSUE #410](https://github.com/executors/executors/issues/410)
+  - Futures Ask 3, [EXECUTORS ISSUE #411](https://github.com/executors/executors/issues/411)
+  - Futures Ask 4, [EXECUTORS ISSUE #412](https://github.com/executors/executors/issues/412)
+  - Futures Ask 5, [EXECUTORS ISSUE #413](https://github.com/executors/executors/issues/413)
+  - Futures Ask 6, [EXECUTORS ISSUE #414](https://github.com/executors/executors/issues/414)
 - 1) Add P1054 style `Receiver` wrappers.
   - Status: TODO.
 - 2) Add `None`/`SingleSender` concepts.
