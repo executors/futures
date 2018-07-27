@@ -1,8 +1,8 @@
-ISO C++ Futures
-===============
+ISO C++ Executors
+=================
 
-Weekly US Timezone Meeting - Notes - 2018-07-13
------------------------------------------------
+Weekly Meeting - Notes - 2018-07-13
+-----------------------------------
 
 **Kindly forgive and identify any mistakes and omissions in these notes.**
 
