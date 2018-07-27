@@ -1,6 +1,6 @@
 # ISO C++ Executors
 
-## Weekly Meeting - Notes - 2018-07-27
+## Weekly Meeting - Notes - 2018-07-20
 
 **Kindly forgive and identify any mistakes and omissions in these notes.**
 
